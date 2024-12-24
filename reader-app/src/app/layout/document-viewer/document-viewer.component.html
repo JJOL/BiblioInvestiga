@@ -1,0 +1,11 @@
+<div class="pdf-container">
+    <ngx-extended-pdf-viewer #pdfViewer
+      [src]="pdfSrc"
+      [zoom]="zoom"
+      [(page)]="pageNumber"
+      [textLayer]="true"
+      (pageRendered)="onPageRendered($event)"
+      [handTool]="false"
+    >
+    </ngx-extended-pdf-viewer>
+  </div>

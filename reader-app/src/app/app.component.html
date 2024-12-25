@@ -2,8 +2,27 @@
   <app-header></app-header>
   
   <div class="content-container">
-    <app-search-panel class="search-panel"></app-search-panel>
-    <app-document-viewer class="document-viewer"></app-document-viewer>
-    <app-comments-panel class="comments-panel"></app-comments-panel>
+    <app-search-panel 
+      class="search-panel"
+      (searchResultSelected)="onSearchResultSelected($event)"
+    ></app-search-panel>
+    
+    @if (viewerState) {
+      <div class="document-viewer">
+        <app-document-viewer
+          [pageNumber]="viewerState.pageNumber"
+          [occurrenceIndex]="viewerState.occurrenceIndex"
+          [lookingForText]="viewerState.searchText"
+          [pdfSrc]="viewerState.documentUrl"
+        ></app-document-viewer>
+      </div>
+      <app-comments-panel class="comments-panel"></app-comments-panel>
+    } @else {
+      <div class="document-viewer-placeholder">
+        Select a search result to view the document
+      </div>
+    }
+
+
   </div>
 </div>

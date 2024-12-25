@@ -1,28 +1,44 @@
 .app-container {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-  }
-  
-  .content-container {
-    display: flex;
-    flex: 1;
-    overflow: hidden;
-  }
-  
-  .search-panel {
-    flex: 0 0 25%; /* 3 columns of 12 */
-    overflow-y: auto;
-    border-right: 1px solid #ddd;
-  }
-  
-  .document-viewer {
-    flex: 0 0 50%; /* 6 columns of 12 */
-    overflow-y: auto;
-  }
-  
-  .comments-panel {
-    flex: 0 0 25%; /* 3 columns of 12 */
-    overflow-y: auto;
-    border-left: 1px solid #ddd;
-  }
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.content-container {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.search-panel {
+  flex: 0 0 25%;
+  overflow-y: auto;
+  border-right: 1px solid #ddd;
+}
+
+.document-viewer{
+  flex: 0 0 50%;
+  overflow-y: auto;
+}
+
+.document-viewer-placeholder {
+  flex: 0 0 75%;
+  overflow-y: auto;
+}
+
+.document-viewer-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  font-size: 1.1rem;
+  text-align: center;
+  padding: 2rem;
+  background-color: #f5f5f5;
+}
+
+.comments-panel {
+  flex: 0 0 25%;
+  overflow-y: auto;
+  border-left: 1px solid #ddd;
+}

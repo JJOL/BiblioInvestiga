@@ -1,0 +1,60 @@
+.header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+  padding: 0;
+  height: 60px;
+}
+
+.ribbon {
+  padding: 4px 8px;
+  background-color: #f8f9fa;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.ribbon-section {
+  padding: 0 8px;
+  border-right: 1px solid #dee2e6;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.app-logo {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+}
+
+.ribbon-button {
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ribbon-button:hover {
+  background-color: #e9ecef;
+  border-color: #dee2e6;
+}
+
+.button-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.material-icons {
+  font-size: 24px;
+  color: #495057;
+}
+
+.button-label {
+  font-size: 12px;
+  color: #495057;
+  white-space: nowrap;
+}

@@ -2,18 +2,39 @@ const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 const PDFParser = require('pdf-parse');
+// const crypto = require('crypto-js');
+const {
+    createHash,
+  } = require('node:crypto');
 
 const app = express();
 const port = 3000;
 
-const fs = require('fs');
-
 // Enable CORS
 app.use(cors());
 
-// Configure multer for file upload
-const upload = multer({
+// Configure storage
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = 'uploads';
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir);
+    }
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    // Preserve original filename with UTF-8 encoding
+    const originalName = Buffer.from(file.originalname, 'latin1').toString('utf8');
+    cb(null, originalName);
+  }
+});
+
+const upload = multer({ storage });
+
+// in memory storage multer for identify-document
+const identifyDocumentUpload = multer({
   storage: multer.memoryStorage(),
   limits: {
     fileSize: 10 * 1024 * 1024 // 10MB limit
@@ -108,10 +129,13 @@ function makePdfDictionary(pagesContent) {
 }
 
 // Route for document identification
-app.post('/identify-document', upload.single('file'), async (req, res) => {
+app.post('/identify-document', identifyDocumentUpload.single('file'), async (req, res) => {
     if (!req.file) {
         return res.status(400).json({ error: 'No file uploaded' });
     }
+
+    // Ensure filename is properly encoded in UTF-8
+    req.file.originalname = Buffer.from(req.file.originalname, 'latin1').toString('utf8');
 
     const fileIdentification = getFileIdentification(req.file);
     
@@ -299,6 +323,48 @@ app.post('/search-document', express.json(), async (req, res) => {
     }
 });
 
+// New endpoint for document upload
+app.post('/upload-document', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: 'No file uploaded' });
+    }
+
+    // Ensure filename is properly encoded in UTF-8
+    req.file.originalname = Buffer.from(req.file.originalname, 'latin1').toString('utf8');
+
+    const metadata = JSON.parse(req.body.metadata);
+
+    // metadata has pageCount. Trust that fileType is PDF and numPages is the same as pageCount
+    const document = {
+      ...metadata,
+      id: createHash('md5').update(metadata.title).digest('hex'),
+      addedDate: new Date(),
+      pageCount: metadata.pageCount
+    };
+
+    // Store document metadata with UTF-8 encoding
+    const documentsFile = 'documents.json';
+    let documents = [];
+    if (fs.existsSync(documentsFile)) {
+      documents = JSON.parse(fs.readFileSync(documentsFile, 'utf8'));
+    }
+    documents.push(document);
+    fs.writeFileSync(documentsFile, JSON.stringify(documents, null, 2), 'utf8');
+
+    res.json({
+      success: true,
+      document
+    });
+
+  } catch (error) {
+    console.error('Error uploading document:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to upload document' 
+    });
+  }
+});
 
 // Start server
 app.listen(port, () => {

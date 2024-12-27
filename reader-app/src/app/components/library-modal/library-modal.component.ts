@@ -4,16 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { Document } from '../../models/document.model';
 import { DocumentService } from '../../services/document.service';
 
-import { PDFDocumentLoadingTask } from '../../../types/pdfjs/pdf';
-import { DocumentInitParameters, RenderParameters, TypedArray } from '../../../types/pdfjs/display/api';
-
 interface DocumentForm {
   file: File | null;
   title: string;
   author: string;
   publishedDate: string;
+  pageCount?: number;
 }
-
 
 @Component({
   selector: 'app-library-modal',
@@ -26,6 +23,7 @@ export class LibraryModalComponent implements OnInit {
   @Output() close = new EventEmitter<void>();
   documents: Document[] = [];
   showAddForm = false;
+  isValidPDF = false;
   
   newDocument: DocumentForm = {
     file: null,
@@ -56,47 +54,69 @@ export class LibraryModalComponent implements OnInit {
     if (input.files && input.files.length > 0) {
       this.newDocument.file = input.files[0];
       this.documentService.identifyDocumentToUpload(this.newDocument.file)
-      .subscribe({
+        .subscribe({
           next: (identification) => {
-              console.log(identification);
+            if (identification.fileType === 'PDF') {
+              this.isValidPDF = true;
+              this.newDocument.pageCount = identification.numPages;
+              // Suggest a title from filename if empty
+              if (!this.newDocument.title) {
+                this.newDocument.title = this.newDocument.file!.name.replace('.pdf', '');
+              }
+            } else {
+              this.isValidPDF = false;
+              alert('Please select a valid PDF file');
+              this.newDocument.file = null;
+              // Reset file input
+              const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+              if (fileInput) fileInput.value = '';
+            }
           },
           error: (error) => {
-              console.error('Error identifying document', error);
+            console.error('Error identifying document', error);
+            this.isValidPDF = false;
+            alert('Error processing file. Please try again.');
           }
-      });
+        });
     }
-
   }
 
-
-
-
   onSaveDocument(): void {
-    if (!this.newDocument.file || !this.newDocument.title || !this.newDocument.author) {
-      alert('Please fill in all required fields');
+    if (!this.newDocument.file || !this.newDocument.title || !this.newDocument.author || !this.isValidPDF) {
+      alert('Please fill in all required fields and ensure a valid PDF is selected');
       return;
     }
 
-    const doc = {
+    const metadata = {
       title: this.newDocument.title,
       author: this.newDocument.author,
       publishedDate: new Date(this.newDocument.publishedDate),
       filename: this.newDocument.file.name,
-      pageCount: 100, // Default page count as specified
+      pageCount: this.newDocument.pageCount!
     };
 
-    
-
-    this.documentService.addDocument(doc);
-    
-    // Reset form
-    this.newDocument = {
-      file: null,
-      title: '',
-      author: '',
-      publishedDate: ''
-    };
-    this.showAddForm = false;
+    this.documentService.uploadDocument(this.newDocument.file, metadata)
+      .subscribe({
+        next: (response) => {
+          if (response.success) {
+            // Reset form
+            this.newDocument = {
+              file: null,
+              title: '',
+              author: '',
+              publishedDate: ''
+            };
+            this.isValidPDF = false;
+            this.showAddForm = false;
+          } else {
+            alert('Error saving document');
+          }
+        },
+        error: (error) => {
+          console.error('Error uploading document:', error);
+          alert('Error uploading document. Please try again.');
+        }
+      });
   }
 
   onCancelAdd(): void {

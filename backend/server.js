@@ -366,6 +366,30 @@ app.post('/upload-document', upload.single('file'), async (req, res) => {
   }
 });
 
+// Add this endpoint before app.listen
+app.get('/documents/:filename', (req, res) => {
+  try {
+    const filename = req.params.filename;
+    const filePath = path.join('uploads', filename);
+
+    // Check if file exists
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'Document not found' });
+    }
+
+    // Set proper headers
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+
+    // Create read stream and pipe to response
+    const fileStream = fs.createReadStream(filePath);
+    fileStream.pipe(res);
+  } catch (error) {
+    console.error('Error serving PDF:', error);
+    res.status(500).json({ error: 'Failed to serve document' });
+  }
+});
+
 // Start server
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);

@@ -38,9 +38,6 @@ export class SearchService {
   }
 
   private mapToSearchResult(result: BackendSearchResult, searchText: string): SearchResult {
-
-    console.log(`documentUrl: '${result.document}'`);
-
     return {
       id: this.nextId++,
       text: searchText,
@@ -48,7 +45,7 @@ export class SearchService {
       context: result.context,
       documentTitle: result.document,
       documentId: this.nextId, // Using same as id for simplicity
-      documentUrl: `assets/${result.document}`,
+      documentUrl: `${this.apiUrl}/documents/${result.document}`,
       occurrenceIndex: result.occurrenceIndex
     };
   }

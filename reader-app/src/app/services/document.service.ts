@@ -8,6 +8,7 @@ export interface DocumentIdentification {
   fileType: string;
   numPages?: number;
   filename: string;
+  documentId: string;
 }
 
 export interface DocumentUploadResponse {
@@ -24,47 +25,20 @@ export class DocumentService {
   private apiUrl = 'http://localhost:3000';
 
   constructor(private http: HttpClient) {
-    // Load documents from localStorage on service initialization
     const savedDocs = localStorage.getItem('documents');
     if (savedDocs) {
       this.documents = JSON.parse(savedDocs);
-    } else {
-      // Initialize with default documents if localStorage is empty
-      // this.documents = [
-      //   {
-      //     title: 'Biografía: Moisés Lira Serafín, MSpS',
-      //     filename: 'Biografia MLS para MSpS.pdf',
-      //     author: 'Congregación de los Misioneros del Espíritu Santo',
-      //     publishedDate: new Date('2023-01-01'),
-      //     addedDate: new Date('2024-01-15'),
-      //     pageCount: 245,
-      //     id: crypto.MD5('Biografía: Moisés Lira Serafín, MSpS').toString()
-      //   },
-      //   {
-      //     title: 'FJR Autobiografía y Souvenirs',
-      //     filename: 'FJR Autobiografía y Souvenirs.pdf',
-      //     author: 'Félix de Jesús Rougier, MSpS',
-      //     publishedDate: new Date('2022-01-01'),
-      //     addedDate: new Date('2024-01-15'),
-      //     pageCount: 180,
-      //     id: crypto.MD5('FJR Autobiografía y Souvenirs').toString()
-      //   }
-      // ];
-      
-      localStorage.setItem('documents', JSON.stringify(this.documents));
+      this.documentsSubject.next(this.documents);
     }
-    
-    this.documentsSubject.next(this.documents);
   }
 
   getAllDocuments(): Observable<Document[]> {
     return this.documentsSubject.asObservable();
   }
 
-  addDocument(doc: Omit<Document, 'id' | 'addedDate'>): Document {
+  addDocument(doc: Omit<Document, 'addedDate'>): Document {
     const newDoc: Document = {
       ...doc,
-      id: this.generateDocumentId(doc.title),
       addedDate: new Date()
     };
 
@@ -82,14 +56,17 @@ export class DocumentService {
     return this.http.post<DocumentIdentification>(`${this.apiUrl}/identify-document`, formData);
   }
 
-  private generateDocumentId(title: string): string {
-    return crypto.MD5(title).toString();
+  private generateDocumentId(title: string, filename: string): string {
+    const uniqueString = `${title}-${filename}-${Date.now()}`;
+    return crypto.MD5(uniqueString).toString();
   }
 
-  uploadDocument(file: File, metadata: Omit<Document, 'id' | 'addedDate'>): Observable<DocumentUploadResponse> {
+  uploadDocument(file: File, metadata: Omit<Document, 'addedDate'>): Observable<DocumentUploadResponse> {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('metadata', JSON.stringify(metadata));
+    formData.append('metadata', JSON.stringify({
+      ...metadata
+    }));
     
     return this.http.post<DocumentUploadResponse>(`${this.apiUrl}/upload-document`, formData)
       .pipe(
@@ -101,5 +78,9 @@ export class DocumentService {
           }
         })
       );
+  }
+
+  getDocumentById(id: string): Document | undefined {
+    return this.documents.find(doc => doc.id === id);
   }
 } 

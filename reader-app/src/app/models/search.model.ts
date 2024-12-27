@@ -4,7 +4,7 @@ export interface SearchResult {
   page: number;
   context: string;
   documentTitle: string;
-  documentId: number;
+  documentId: string;
   documentUrl: string;
   occurrenceIndex: number;
 } 

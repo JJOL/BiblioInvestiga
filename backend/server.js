@@ -25,8 +25,9 @@ const storage = multer.diskStorage({
     cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
-    // Preserve original filename with UTF-8 encoding
+    // Decode the original filename from latin1 to UTF-8
     const originalName = Buffer.from(file.originalname, 'latin1').toString('utf8');
+    // Use the decoded filename
     cb(null, originalName);
   }
 });
@@ -128,52 +129,53 @@ function makePdfDictionary(pagesContent) {
     return pdfDictionary;
 }
 
+// Add this function at the top with other utility functions
+function generateDocumentId(title, filename) {
+  const uniqueString = `${title}-${filename}-${Date.now()}`;
+  return createHash('md5').update(uniqueString).digest('hex');
+}
+
 // Route for document identification
 app.post('/identify-document', identifyDocumentUpload.single('file'), async (req, res) => {
     if (!req.file) {
         return res.status(400).json({ error: 'No file uploaded' });
     }
 
-    // Ensure filename is properly encoded in UTF-8
     req.file.originalname = Buffer.from(req.file.originalname, 'latin1').toString('utf8');
-
     const fileIdentification = getFileIdentification(req.file);
     
     try {
         if (fileIdentification.fileType === 'PDF') {
             const fileInfo = await getPDFInfo(req.file);
+            const documentId = generateDocumentId(req.file.originalname, req.file.originalname);
 
             const pdfDictionary = makePdfDictionary(fileInfo.pagesContent);
 
-            // save pdfDictionary to file in the path 'dictionaries/<filename>.json'
-            // create the dictionaries folder if it doesn't exist
+            // Save dictionary with document ID
             const dictionariesFolder = 'dictionaries';
             if (!fs.existsSync(dictionariesFolder)) {
                 fs.mkdirSync(dictionariesFolder);
             }
-
-            const dictionaryFileName = `${dictionariesFolder}/${fileInfo.filename}.json`;
+            const dictionaryFileName = `${dictionariesFolder}/${documentId}.json`;
             fs.writeFileSync(dictionaryFileName, JSON.stringify(pdfDictionary, null, 2));
 
+            // Save text content with document ID
             const textContentFolder = 'texts';
             if (!fs.existsSync(textContentFolder)) {
                 fs.mkdirSync(textContentFolder);
             }
-
-            // save each page content in an entry of an array similar to the pdfDictionary
-            const textContentFileName = `${textContentFolder}/${fileInfo.filename}.json`;
+            const textContentFileName = `${textContentFolder}/${documentId}.json`;
             const textContent = fileInfo.pagesContent.map((pageContent, index) => ({
                 page: index + 1,
                 content: pageContent
             }));
             fs.writeFileSync(textContentFileName, JSON.stringify(textContent, null, 2));
 
-
             res.json({
                 fileType: fileIdentification.fileType,
                 numPages: fileInfo.numPages,
                 filename: fileInfo.filename,
-                pagesDictionary: pdfDictionary
+                documentId: documentId
             });
         } else {
             res.json({
@@ -325,69 +327,65 @@ app.post('/search-document', express.json(), async (req, res) => {
 
 // New endpoint for document upload
 app.post('/upload-document', upload.single('file'), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ success: false, error: 'No file uploaded' });
+    try {
+        if (!req.file) {
+            return res.status(400).json({ success: false, error: 'No file uploaded' });
+        }
+
+        const metadata = JSON.parse(req.body.metadata);
+        const documentId = metadata.id;
+
+        // Get the properly decoded filename
+        const originalFilename = Buffer.from(req.file.originalname, 'latin1').toString('utf8');
+        const newFilename = `${documentId}.pdf`;
+
+        fs.renameSync(
+            path.join('uploads', originalFilename), // Use the decoded filename
+            path.join('uploads', newFilename)
+        );
+
+        const document = {
+            ...metadata,
+            filename: newFilename
+        };
+
+        // Update documents.json
+        const documentsFile = 'documents.json';
+        let documents = [];
+        if (fs.existsSync(documentsFile)) {
+            documents = JSON.parse(fs.readFileSync(documentsFile, 'utf8'));
+        }
+        documents.push(document);
+        fs.writeFileSync(documentsFile, JSON.stringify(documents, null, 2), 'utf8');
+
+        res.json({
+            success: true,
+            document
+        });
+    } catch (error) {
+        console.error('Error uploading document:', error);
+        res.status(500).json({ success: false, error: 'Failed to upload document' });
     }
-
-    // Ensure filename is properly encoded in UTF-8
-    req.file.originalname = Buffer.from(req.file.originalname, 'latin1').toString('utf8');
-
-    const metadata = JSON.parse(req.body.metadata);
-
-    // metadata has pageCount. Trust that fileType is PDF and numPages is the same as pageCount
-    const document = {
-      ...metadata,
-      id: createHash('md5').update(metadata.title).digest('hex'),
-      addedDate: new Date(),
-      pageCount: metadata.pageCount
-    };
-
-    // Store document metadata with UTF-8 encoding
-    const documentsFile = 'documents.json';
-    let documents = [];
-    if (fs.existsSync(documentsFile)) {
-      documents = JSON.parse(fs.readFileSync(documentsFile, 'utf8'));
-    }
-    documents.push(document);
-    fs.writeFileSync(documentsFile, JSON.stringify(documents, null, 2), 'utf8');
-
-    res.json({
-      success: true,
-      document
-    });
-
-  } catch (error) {
-    console.error('Error uploading document:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to upload document' 
-    });
-  }
 });
 
-// Add this endpoint before app.listen
-app.get('/documents/:filename', (req, res) => {
-  try {
-    const filename = req.params.filename;
-    const filePath = path.join('uploads', filename);
+// Update document serving endpoint to use ID
+app.get('/documents/:id', (req, res) => {
+    try {
+        const documentId = req.params.id;
+        const filePath = path.join('uploads', `${documentId}.pdf`);
 
-    // Check if file exists
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ error: 'Document not found' });
+        if (!fs.existsSync(filePath)) {
+            return res.status(404).json({ error: 'Document not found' });
+        }
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `inline; filename="${documentId}.pdf"`);
+        const fileStream = fs.createReadStream(filePath);
+        fileStream.pipe(res);
+    } catch (error) {
+        console.error('Error serving PDF:', error);
+        res.status(500).json({ error: 'Failed to serve document' });
     }
-
-    // Set proper headers
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
-
-    // Create read stream and pipe to response
-    const fileStream = fs.createReadStream(filePath);
-    fileStream.pipe(res);
-  } catch (error) {
-    console.error('Error serving PDF:', error);
-    res.status(500).json({ error: 'Failed to serve document' });
-  }
 });
 
 // Start server

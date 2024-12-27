@@ -10,6 +10,7 @@ interface DocumentForm {
   author: string;
   publishedDate: string;
   pageCount?: number;
+  documentId?: string;
 }
 
 @Component({
@@ -59,7 +60,7 @@ export class LibraryModalComponent implements OnInit {
             if (identification.fileType === 'PDF') {
               this.isValidPDF = true;
               this.newDocument.pageCount = identification.numPages;
-              // Suggest a title from filename if empty
+              this.newDocument.documentId = identification.documentId;
               if (!this.newDocument.title) {
                 this.newDocument.title = this.newDocument.file!.name.replace('.pdf', '');
               }
@@ -67,7 +68,6 @@ export class LibraryModalComponent implements OnInit {
               this.isValidPDF = false;
               alert('Please select a valid PDF file');
               this.newDocument.file = null;
-              // Reset file input
               const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
               if (fileInput) fileInput.value = '';
             }
@@ -92,14 +92,14 @@ export class LibraryModalComponent implements OnInit {
       author: this.newDocument.author,
       publishedDate: new Date(this.newDocument.publishedDate),
       filename: this.newDocument.file.name,
-      pageCount: this.newDocument.pageCount!
+      pageCount: this.newDocument.pageCount!,
+      id: this.newDocument.documentId!
     };
 
     this.documentService.uploadDocument(this.newDocument.file, metadata)
       .subscribe({
         next: (response) => {
           if (response.success) {
-            // Reset form
             this.newDocument = {
               file: null,
               title: '',

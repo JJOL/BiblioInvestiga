@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Component, Input, NgZone, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
-import { NgxExtendedPdfViewerComponent, NgxExtendedPdfViewerModule, PageRenderedEvent } from 'ngx-extended-pdf-viewer';
+import { NgxExtendedPdfViewerComponent, NgxExtendedPdfViewerModule, PageRenderedEvent, PDFScriptLoaderService } from 'ngx-extended-pdf-viewer';
 
 
 
@@ -75,9 +75,10 @@ export class DocumentViewerComponent implements OnInit, OnChanges {
 
   previousHighlighted: HighlightableText[] = [];
 
-  constructor(private ngZone: NgZone) {}
+  constructor(private ngZone: NgZone, private readonly pdfScriptLoaderService: PDFScriptLoaderService) {}
 
-  ngOnInit() {}
+  ngOnInit() {
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     console.log('Changed looking for text:', this.lookingForText);
@@ -88,21 +89,35 @@ export class DocumentViewerComponent implements OnInit, OnChanges {
 
   findTextInElements(text: string, elements: HTMLElement[]): HighlightableText[] {
     let found: HighlightableText[] = [];
-    // text = text.toLowerCase();
+    
+    // Normalize the search text (case-insensitive, remove diacritics)
+    const normalizedSearchText = text
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+    
     console.log('Looking for text: "' + text + '"');
     
-    let currentLookingText = text;
+    let currentLookingText = normalizedSearchText;
     let partialFound: AnnotatedSpan[] = [];
     for (let i = 0; i < elements.length; i++) {
       var span = elements[i];
-      let spanText = span.textContent || '';
+      // Normalize the span text for comparison
+      let normalizedSpanText = (span.textContent || '')
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '');
 
-      if (spanText.trim().length == 0) {
+      if (normalizedSpanText.trim().length == 0) {
         continue;
       }
 
-      if (spanText.includes(text)) {
-        found.push(new SingleSpanHighlightableText(span, text));
+      // For exact matches, use the original text length but normalized content
+      if (normalizedSpanText.includes(normalizedSearchText)) {
+        found.push(new SingleSpanHighlightableText(span, span.textContent!.substring(
+          normalizedSpanText.indexOf(normalizedSearchText),
+          normalizedSpanText.indexOf(normalizedSearchText) + text.length
+        )));
         continue;
       }
 
@@ -110,7 +125,7 @@ export class DocumentViewerComponent implements OnInit, OnChanges {
       let textLimit = currentLookingText.length;
       if (partialFound.length == 0) {
         while (!spanContainsText && textLimit > 0) {
-          if (spanText.endsWith(currentLookingText.substring(0, textLimit))) {
+          if (normalizedSpanText.endsWith(currentLookingText.substring(0, textLimit))) {
             spanContainsText = true;
           } else {
             textLimit--;
@@ -118,7 +133,7 @@ export class DocumentViewerComponent implements OnInit, OnChanges {
         }
       } else {
         while (!spanContainsText && textLimit > 0) {
-          if (spanText.startsWith(currentLookingText.substring(0, textLimit))) {
+          if (normalizedSpanText.startsWith(currentLookingText.substring(0, textLimit))) {
             spanContainsText = true;
           } else {
             textLimit--;
@@ -127,27 +142,36 @@ export class DocumentViewerComponent implements OnInit, OnChanges {
       }
 
       if (spanContainsText) {
-        console.log('Span: "' + spanText + '"');
-        console.log('Contains text: "' + currentLookingText.substring(0, textLimit) + '"');
+        console.log('Span: "' + span.textContent + '"');
+        const matchedText = currentLookingText.substring(0, textLimit);
+        console.log('Contains text: "' + matchedText + '"');
+        
+        // Get the original text from the span that matches the normalized position
+        const originalSpanText = span.textContent || '';
+        const matchStart = normalizedSpanText.indexOf(matchedText);
+        const originalMatchedText = originalSpanText.substring(
+          matchStart,
+          matchStart + (partialFound.length === 0 ? textLimit : text.length - currentLookingText.length + textLimit)
+        );
+
         partialFound.push({
           span: span,
-          text: currentLookingText.substring(0, textLimit).trim()
+          text: originalMatchedText.trim()
         });
+        
         currentLookingText = currentLookingText.substring(textLimit).trimStart();
-        // console.log('Current looking text: "' + currentLookingText + '"');
         if (currentLookingText.length === 0) {
           found.push(new MultipleSpanHighlightableText(partialFound));
           partialFound = [];
           break;
         }
       } else {
-        currentLookingText = text;
+        currentLookingText = normalizedSearchText;
         partialFound = [];
       }
     }
 
     console.log('Found:', found);
-
     return found;
   }
 
@@ -162,6 +186,8 @@ export class DocumentViewerComponent implements OnInit, OnChanges {
     const pageElement = document.querySelector(`.page[data-page-number="${this.pageNumber}"]`);
     if (pageElement) {
       const textLayerElement = pageElement.querySelector('.textLayer');
+
+      console.log('PDFViewer', this.pdfViewer);
 
       if (textLayerElement) {
         this.clearPreviousHighlight();

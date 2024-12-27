@@ -25,10 +25,20 @@ export class AppComponent {
   title = 'reader-app';
   
   viewerState: ViewerState | null = null;
+  showSearchPanel = true;
+  showCommentsPanel = true;
+
+  pdfUrl = "assets/FJR Autobiografía y Souvenirs.pdf"
+
+  toggleSearchPanel(): void {
+    this.showSearchPanel = !this.showSearchPanel;
+  }
+
+  toggleCommentsPanel(): void {
+    this.showCommentsPanel = !this.showCommentsPanel;
+  }
 
   onSearchResultSelected(result: SearchResult): void {
-    // TODO: Handle the search result, e.g., navigate to the page and highlight the text
-    console.log('Search result selected:', result);
     this.viewerState = {
       pageNumber: result.page,
       occurrenceIndex: result.occurrenceIndex,

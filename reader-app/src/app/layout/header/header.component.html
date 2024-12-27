@@ -3,13 +3,37 @@
     <div class="ribbon-section">
       <img src="assets/raw-logo.jpg" alt="Reader App Logo" class="app-logo">
     </div>
+    
     <div class="ribbon-section">
       <button class="ribbon-button" (click)="openLibrary()">
         <div class="button-content">
-          <span class="material-icons">library_books</span>
+          <span class="material-icons">menu_book</span>
           <span class="button-label">My Library</span>
+        </div>
+      </button>
+    </div>
+
+    <div class="ribbon-section">
+      <button class="ribbon-button" (click)="onToggleSearch()">
+        <div class="button-content">
+          <span class="material-icons">search</span>
+          <span class="button-label">Search</span>
+        </div>
+      </button>
+    </div>
+
+    <div class="ribbon-section">
+      <button class="ribbon-button" (click)="onToggleComments()">
+        <div class="button-content">
+          <span class="material-icons">comment</span>
+          <span class="button-label">Comments</span>
         </div>
       </button>
     </div>
   </div>
 </header>
+
+<app-library-modal 
+  *ngIf="showLibrary" 
+  (close)="closeLibrary()"
+></app-library-modal>

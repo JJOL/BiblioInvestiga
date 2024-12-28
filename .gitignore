@@ -2,10 +2,16 @@ data
 # See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
 
 # Compiled output
-/dist
+dist
 /tmp
 /out-tsc
 /bazel-out
+
+# Backend project user-data
+backend/dictionaries
+backend/texts
+backend/uploads
+backend/documents.json
 
 node_modules
 

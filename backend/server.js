@@ -48,9 +48,14 @@ const identifyDocumentUpload = multer({
 });
 
 app.use(bodyParser.urlencoded({ extended: true }));
+// form data parsing with multer middleware
+
+let multerFormData = multer({
+
+});
 
 // Route for document identification
-app.get('/identify-document', identifyDocumentUpload.single('file'), async (req, res) => {
+app.post('/identify-document', identifyDocumentUpload.single('file'), async (req, res) => {
     if (!req.file) {
         return res.status(400).json({ error: 'No file uploaded' });
     }

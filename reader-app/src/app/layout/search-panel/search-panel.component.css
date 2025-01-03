@@ -46,6 +46,8 @@
   border-radius: 4px;
   cursor: pointer;
   transition: background-color 0.2s;
+
+  position: relative;
 }
 
 .result-item:hover {
@@ -61,4 +63,14 @@
 .result-context {
   font-size: 0.9rem;
   color: #333;
+}
+
+.result-index {
+  font-size: 0.8rem;
+  text-align: right;
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  padding: 0.5rem;
 }

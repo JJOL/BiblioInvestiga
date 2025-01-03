@@ -68,6 +68,7 @@ export class DocumentViewerComponent implements OnInit, OnChanges {
   @ViewChild('pdfViewer') pdfViewer!: NgxExtendedPdfViewerComponent;
   zoom = 'auto';
 
+  @Input() src: string | Uint8Array = '';
   @Input() pdfSrc: string = '';
   @Input() pageNumber: number = 5;
   @Input() lookingForText: string = 'Zacatlán a Amozoc';

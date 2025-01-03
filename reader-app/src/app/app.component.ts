@@ -26,9 +26,10 @@ export class AppComponent {
   
   viewerState: ViewerState | null = null;
   showSearchPanel = true;
-  showCommentsPanel = true;
+  showCommentsPanel = false;
 
   pdfUrl = "assets/FJR Autobiografía y Souvenirs.pdf"
+  pdfContent!: Uint8Array;
 
   toggleSearchPanel(): void {
     this.showSearchPanel = !this.showSearchPanel;
@@ -43,7 +44,7 @@ export class AppComponent {
       pageNumber: result.page,
       occurrenceIndex: result.occurrenceIndex,
       searchText: result.text,
-      documentUrl: result.documentUrl
+      documentUrl: result.document
     };
   }
 }

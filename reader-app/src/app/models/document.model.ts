@@ -1,9 +1,10 @@
 export interface Document {
-  id: string;       // MD5 hash of title
-  filename: string;
+  id: string;
   title: string;
   author: string;
   publishedDate: Date;
   addedDate: Date;
-  pageCount: number;
+  filename: string;
+  originalFilename: string;
+  numPages: number;
 } 

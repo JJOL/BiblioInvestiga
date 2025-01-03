@@ -1,10 +1,8 @@
 export interface SearchResult {
-  id: number;
-  text: string;
+  document: string;
   page: number;
+  occurrenceIndex: number;
+  text: string;
   context: string;
   documentTitle: string;
-  documentId: string;
-  documentUrl: string;
-  occurrenceIndex: number;
 } 

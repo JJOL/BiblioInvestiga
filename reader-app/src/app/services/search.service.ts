@@ -1,23 +1,30 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable, from, defer } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { SearchResult } from '../models/search.model';
 import { DocumentService } from './document.service';
 import { Document } from '../models/document.model';
+import {} from './apis';
 
-interface BackendSearchResult {
-  document: string;
-  page: number;
-  occurrenceIndex: number;
-  text: string;
-  context: string;
-  documentId: string;
+interface Search {
+  searchedText: string;
+  documentId?: string;
 }
 
 interface SearchResponse {
-  results: BackendSearchResult[];
+  results: SearchResult[];
 }
+
+// interface ElectronAPI {
+//   searchDocument(payload: { searchedText: string, documentId?: string }): Promise<SearchResponse>;
+// }
+
+// declare global {
+//   interface Window {
+//     electronAPI: ElectronAPI
+//   }
+// }
 
 @Injectable({
   providedIn: 'root'
@@ -37,29 +44,32 @@ export class SearchService {
       documentId: documentId
     };
 
-    return this.http.post<SearchResponse>(`${this.apiUrl}/search-document`, payload)
+    if (window.electronAPI) {
+      return this._electronSearch(payload);
+    } else {
+      return this._httpSearch(payload);
+    }
+  }
+
+  private _electronSearch(payload: any): Observable<SearchResult[]> {
+    throw new Error('Method not implemented.')
+  }
+
+  private _httpSearch(search: Search): Observable<SearchResult[]> {
+    let options = {
+      headers: new HttpHeaders().set('Content-Type', 'application/x-www-form-urlencoded')
+    };
+
+    let urlSearchParams = new URLSearchParams();
+    urlSearchParams.append('searchedText', search.searchedText);
+    if (search.documentId) {
+      urlSearchParams.append('documentId', search.documentId);
+    }
+
+    return this.http.post<SearchResponse>(`${this.apiUrl}/search-document`, urlSearchParams.toString(), options)
       .pipe(
-        map(response => response.results.map(result => {
-          const document = this.documentService.getDocumentById(result.document);
-          return this.mapToSearchResult(result, searchText, document);
-        }))
+        map(response => response.results)
       );
   }
 
-  private mapToSearchResult(
-    result: BackendSearchResult, 
-    searchText: string,
-    document?: Document
-  ): SearchResult {
-    return {
-      id: this.nextId++,
-      text: searchText,
-      page: result.page,
-      context: result.context,
-      documentTitle: document?.title || result.document,
-      documentUrl: `${this.apiUrl}/documents/${result.document}`,
-      occurrenceIndex: result.occurrenceIndex,
-      documentId: document?.id || result.document
-    };
-  }
 } 

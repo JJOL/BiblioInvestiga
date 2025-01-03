@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
-import { Observable, BehaviorSubject, tap } from 'rxjs';
+import { Observable, BehaviorSubject, tap, map } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { Document } from '../models/document.model';
-import * as crypto from 'crypto-js';
+import {} from './apis';
 
 export interface DocumentIdentification {
   fileType: string;
@@ -11,10 +11,36 @@ export interface DocumentIdentification {
   documentId: string;
 }
 
+export interface DocumentIdentificationResponse {
+  success: boolean;
+  info: DocumentIdentification;
+}
+
+export interface DocumentUpload {
+  title: string;
+  author: string;
+  publishedDate: Date;
+  file: File;
+}
+
 export interface DocumentUploadResponse {
   success: boolean;
   document: Document;
 }
+
+export interface DocumentsListResponse {
+  documents: Document[];
+}
+
+// interface ElectronAPI {
+//   uploadDocument(uploadPayload: { documentInfo: Document, file: File }): Promise<void>;
+// }
+
+// declare global {
+//   interface Window {
+//     electronAPI: ElectronAPI
+//   }
+// }
 
 @Injectable({
   providedIn: 'root'
@@ -25,62 +51,101 @@ export class DocumentService {
   private apiUrl = 'http://localhost:3000';
 
   constructor(private http: HttpClient) {
-    const savedDocs = localStorage.getItem('documents');
-    if (savedDocs) {
-      this.documents = JSON.parse(savedDocs);
-      this.documentsSubject.next(this.documents);
+    this._loadSavedDocuments();
+  }
+
+  private _loadSavedDocuments() {
+    if (window.electronAPI) {
+      this._electronLoadDocuments();
+    } else {
+      this._httpLoadDocuments();
     }
+  }
+
+  private _electronLoadDocuments() {
+    throw new Error('Method not implemented.');
+  }
+
+  private _httpLoadDocuments() {
+    this.http.get<DocumentsListResponse>(`${this.apiUrl}/documents`)
+      .subscribe(resp => {
+        this.documents = resp.documents;
+        this.documentsSubject.next(this.documents);
+      });
   }
 
   getAllDocuments(): Observable<Document[]> {
     return this.documentsSubject.asObservable();
   }
 
-  addDocument(doc: Omit<Document, 'addedDate'>): Document {
-    const newDoc: Document = {
-      ...doc,
-      addedDate: new Date()
-    };
-
-    this.documents.push(newDoc);
-    this.documentsSubject.next(this.documents);
-    localStorage.setItem('documents', JSON.stringify(this.documents));
-
-    return newDoc;
+  async addDocument(doc: DocumentUpload): Promise<Document> {
+    if (window.electronAPI) {
+      return this._electronUploadDocument(doc);
+    } else {
+      return this._httpUploadDocument(doc);
+    }
   }
 
-  identifyDocumentToUpload(file: File): Observable<DocumentIdentification> {
-    const formData = new FormData();
-    formData.append('file', file);
-    
-    return this.http.post<DocumentIdentification>(`${this.apiUrl}/identify-document`, formData);
+  private async _electronUploadDocument(upload: DocumentUpload): Promise<Document> {
+    throw new Error('Method not implemented.');
   }
 
-  private generateDocumentId(title: string, filename: string): string {
-    const uniqueString = `${title}-${filename}-${Date.now()}`;
-    return crypto.MD5(uniqueString).toString();
-  }
-
-  uploadDocument(file: File, metadata: Omit<Document, 'addedDate'>): Observable<DocumentUploadResponse> {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('metadata', JSON.stringify({
-      ...metadata
-    }));
-    
-    return this.http.post<DocumentUploadResponse>(`${this.apiUrl}/upload-document`, formData)
-      .pipe(
-        tap(response => {
-          if (response.success) {
-            this.documents.push(response.document);
+  private async _httpUploadDocument(upload: DocumentUpload): Promise<Document> {
+    return new Promise<Document>((resolve, reject) => {
+      const formData = new FormData();
+      formData.append('file', upload.file);
+      formData.append('title', upload.title);
+      formData.append('author', upload.author);
+      formData.append('publishedDate', upload.publishedDate.toISOString());
+  
+      this.http.post<DocumentUploadResponse>(`${this.apiUrl}/documents`, formData)
+        .subscribe({
+          next: resp => {
+            this.documents.push(resp.document);
             this.documentsSubject.next(this.documents);
-            localStorage.setItem('documents', JSON.stringify(this.documents));
-          }
-        })
-      );
+            resolve(resp.document);
+          },
+          error: reject
+        });
+    });
+    
+    
+  }
+
+  async identifyDocumentToUpload(file: File): Promise<DocumentIdentification> {
+    if (window.electronAPI) {
+      return this._electronIdentifyDocumentToUpload(file);
+    } else {
+      return this._httpIdentifyDocumentToUpload(file);
+    }
+  }
+
+  private _electronIdentifyDocumentToUpload(file: File): Promise<DocumentIdentification> {
+    throw new Error('Method not implemented.');
+  }
+
+  private _httpIdentifyDocumentToUpload(file: File): Promise<DocumentIdentification> {
+    return new Promise<DocumentIdentification>((resolve, reject) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      this.http.post<DocumentIdentificationResponse>(`${this.apiUrl}/identify-document`, formData)
+      .subscribe({
+        next: resp => {
+          resolve(resp.info)
+        },
+        error: reject
+      })
+    });
   }
 
   getDocumentById(id: string): Document | undefined {
     return this.documents.find(doc => doc.id === id);
+  }
+
+  getDocumentContentById(id: string): Observable<Uint8Array> {
+    return this.http.get(`${this.apiUrl}/documents/${id}/file`, { responseType: 'arraybuffer' })
+      .pipe(
+        map((response: any) => new Uint8Array(response))
+      );
   }
 } 

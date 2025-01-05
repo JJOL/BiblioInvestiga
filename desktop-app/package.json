@@ -11,5 +11,8 @@
   "description": "An application to read PDF documents and perform cross-referencing and universal workspace search.",
   "devDependencies": {
     "electron": "^33.2.1"
+  },
+  "dependencies": {
+    "pdf-parse": "^1.1.1"
   }
 }

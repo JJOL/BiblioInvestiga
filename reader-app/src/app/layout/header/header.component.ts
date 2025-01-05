@@ -12,6 +12,7 @@ import { LibraryModalComponent } from '../../components/library-modal/library-mo
 export class HeaderComponent {
   @Output() toggleSearch = new EventEmitter<void>();
   @Output() toggleComments = new EventEmitter<void>();
+  @Output() toggleSplitView = new EventEmitter<void>();
   
   showLibrary = false;
 
@@ -29,5 +30,9 @@ export class HeaderComponent {
 
   onToggleComments(): void {
     this.toggleComments.emit();
+  }
+
+  onToggleSplitView(): void {
+    this.toggleSplitView.emit();
   }
 }

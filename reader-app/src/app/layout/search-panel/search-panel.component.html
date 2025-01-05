@@ -1,34 +1,36 @@
 <div class="search-container">
-  <div class="search-input-container">
-    <input 
-      type="text" 
-      [(ngModel)]="searchText" 
-      (ngModelChange)="onSearch()"
-      placeholder="Search in document..."
-      class="search-input"
-    >
-  </div>
-
-  <div class="results-container">
-    <div *ngIf="results.length === 0 && searchText" class="no-results">
-      No results found
-    </div>
-    
-    <div *ngIf="results.length > 0" class="results-count">
-      Found {{ results.length }} results
-    </div>
-
-    <div class="results-list">
-      <div 
-        *ngFor="let result of results; let i = index" 
-        class="result-item"
-        (click)="selectResult(result)"
+  @if (showSearchPanel) {
+    <div class="search-input-container">
+      <input 
+        type="text" 
+        [(ngModel)]="searchText" 
+        (ngModelChange)="onSearch()"
+        placeholder="Search in document..."
+        class="search-input"
       >
-        <div class="result-title">{{ result.context }}</div>
-        <div class="result-page">Page {{ result.page }}</div>
-        <div class="result-context">{{ result.documentTitle }}</div>
-        <div class="result-index">{{ i + 1 }}</div>
+    </div>
+  
+    <div class="results-container">
+      <div *ngIf="results.length === 0 && searchText" class="no-results">
+        No results found
+      </div>
+      
+      <div *ngIf="results.length > 0" class="results-count">
+        Found {{ results.length }} results
+      </div>
+  
+      <div class="results-list">
+        <div 
+          *ngFor="let result of results; let i = index" 
+          class="result-item"
+          (click)="selectResult(result)"
+        >
+          <div class="result-title">{{ result.context }}</div>
+          <div class="result-page">Page {{ result.page }}</div>
+          <div class="result-context">{{ result.documentTitle }}</div>
+          <div class="result-index">{{ i + 1 }}</div>
+        </div>
       </div>
     </div>
-  </div>
+  }
 </div>

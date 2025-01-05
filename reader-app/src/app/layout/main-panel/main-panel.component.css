@@ -1,0 +1,9 @@
+.main-container {
+    height: 100%;
+    display: flex;
+}
+
+.pdf-viewer {
+    height: 100%;
+    flex: 1;
+}

@@ -1,0 +1,16 @@
+<div>
+    <app-viewer-tabs
+        [loadedDocuments]="loadedDocuments"
+        [isFocused]="focused"
+        [activeDocument]="activeDocument"
+        (loadLibDocument)="loadLibDocument($event)"
+        (selectDocument)="selectDocument($event)"
+    ></app-viewer-tabs>
+    <app-document-viewer
+        [document]="activeDocument"
+        [pageNumber]="searchResult?.page ?? 0"
+        [occurrenceIndex]="searchResult?.occurrenceIndex ?? 0"
+        [lookingForText]="searchResult?.text ?? ''"
+        [isSearchOpen]="isSearchOpen"
+    ></app-document-viewer>
+</div>

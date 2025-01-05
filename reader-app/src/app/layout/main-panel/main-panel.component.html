@@ -1,0 +1,22 @@
+<div class="main-container">
+    <div class="pdf-viewer">
+        <app-viewer
+            #firstViewer
+            (requestFocus)="focusFirstViewer()"
+            [focused]="isFirstViewerFocused()"
+            [searchResult]="getViewerSearchResult(1)"
+            [isSearchOpen]="isSearchOpen"
+        ></app-viewer>
+    </div>
+    @if (showSplitView) {
+        <div class="pdf-viewer">
+            <app-viewer
+                #secondViewer
+                (requestFocus)="focusSecondViewer()"
+                [focused]="isSecondViewerFocused()"
+                [searchResult]="getViewerSearchResult(2)"
+                [isSearchOpen]="isSearchOpen"
+            ></app-viewer>
+        </div>
+    }
+</div>

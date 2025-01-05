@@ -1,4 +1,4 @@
-import { Component, Output, EventEmitter } from '@angular/core';
+import { Component, Output, EventEmitter, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
@@ -15,6 +15,7 @@ import { SearchResult } from '../../models/search.model';
 })
 export class SearchPanelComponent {
   @Output() searchResultSelected = new EventEmitter<SearchResult>();
+  @Input() showSearchPanel = true;
 
   searchText: string = '';
   results: SearchResult[] = [];

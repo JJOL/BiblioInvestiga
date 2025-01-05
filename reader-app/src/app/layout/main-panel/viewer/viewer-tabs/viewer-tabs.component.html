@@ -1,0 +1,15 @@
+<ul class="{{ isFocused ? 'focused' : '' }}">
+@for (doc of loadedDocuments; track doc.id) {
+    @if (doc.id == activeDocument!.id) {
+        <li
+            (click)="onTabClick(doc)"
+            style="font-weight: bold; text-decoration: underline;"
+        >{{doc.title}}</li>
+    } @else {
+        <li
+            (click)="onTabClick(doc)"
+        >{{doc.title}}</li>
+    }
+}
+</ul>
+<button (click)="onAddBtnClick()">+</button>

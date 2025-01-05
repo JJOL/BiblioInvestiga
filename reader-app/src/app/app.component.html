@@ -2,6 +2,7 @@
   <app-header
     (toggleSearch)="toggleSearchPanel()"
     (toggleComments)="toggleCommentsPanel()"
+    (toggleSplitView)="toggleSplitView()"
   ></app-header>
   
   <div class="content-container">
@@ -9,23 +10,30 @@
       <app-search-panel 
         class="search-panel"
         (searchResultSelected)="onSearchResultSelected($event)"
+        [showSearchPanel]="showSearchPanel"
       ></app-search-panel>
     }
 
     <div class="main-container" [class.with-search]="showSearchPanel" [class.with-comments]="showCommentsPanel">
+      <app-main-panel
+        [showSplitView]="showSplitView"
+        [searchResult]="selectedSearchResult"
+        [isSearchOpen]="showSearchPanel"
+        >
+      </app-main-panel>
       @if (viewerState) {
-          <app-document-viewer
+          <!-- <app-document-viewer
             class="document-viewer"
             [documentId]="viewerState.documentUrl"
             [pageNumber]="viewerState.pageNumber-1"
             [occurrenceIndex]="viewerState.occurrenceIndex"
             [lookingForText]="viewerState.searchText"
             [delay]="0"
-          ></app-document-viewer>
+          ></app-document-viewer> -->
       } @else {
-        <div class="document-viewer-placeholder">
+        <!-- <div class="document-viewer-placeholder">
           Select a search result to view the document
-        </div>
+        </div> -->
       }
       <!-- <div class="pdf-viewer">
         @if (pdfSrc) {

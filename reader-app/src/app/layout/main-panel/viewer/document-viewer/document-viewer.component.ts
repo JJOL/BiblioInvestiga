@@ -1,7 +1,7 @@
 import { ChangeDetectorRef, Component, Input, NgZone, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
-import { NgxExtendedPdfViewerComponent, NgxExtendedPdfViewerModule, PageRenderedEvent, PDFScriptLoaderService } from 'ngx-extended-pdf-viewer';
-import { DocumentService } from '../../services/document.service';
-
+// import { NgxExtendedPdfViewerComponent, NgxExtendedPdfViewerModule, PageRenderedEvent, PDFScriptLoaderService } from 'ngx-extended-pdf-viewer';
+import { DocumentService } from '../../../../services/document.service';
+import { Document } from '../../../../models/document.model';
 
 
 interface HighlightableText {
@@ -61,20 +61,23 @@ class MultipleSpanHighlightableText implements HighlightableText {
 @Component({
   selector: 'app-document-viewer',
   standalone: true,
-  imports: [NgxExtendedPdfViewerModule],
+  imports: [],
   templateUrl: './document-viewer.component.html',
   styleUrl: './document-viewer.component.css'
 })
 export class DocumentViewerComponent implements OnInit, OnChanges {
-  @ViewChild('pdfViewer') pdfViewer!: NgxExtendedPdfViewerComponent;
+  @ViewChild('pdfViewer') pdfViewer!: any;
   zoom = 'auto';
 
   @Input() src: string | Uint8Array = '';
   @Input() pdfSrc: string = '';
   @Input() documentId: string = '';
+  @Input() document?: Document;
   @Input() pageNumber: number = 5;
   @Input() lookingForText: string = 'Zacatlán a Amozoc';
   @Input() occurrenceIndex: number = 0;
+
+  @Input() isSearchOpen = false;
 
   @Input() delay = 0;
 
@@ -84,7 +87,7 @@ export class DocumentViewerComponent implements OnInit, OnChanges {
 
   constructor(
     private ngZone: NgZone,
-    private readonly pdfScriptLoaderService: PDFScriptLoaderService,
+    // // private readonly pdfScriptLoaderService: PDFScriptLoaderService,
     private documentService: DocumentService,
   ) {}
 
@@ -237,7 +240,7 @@ export class DocumentViewerComponent implements OnInit, OnChanges {
     return false;
   }
 
-  onPageRendered(event: PageRenderedEvent) {
+  onPageRendered(event: any) {
     setTimeout(() => {
       console.log('Looking for text:', this.lookingForText);
       if (event.pageNumber === this.pageNumber) {

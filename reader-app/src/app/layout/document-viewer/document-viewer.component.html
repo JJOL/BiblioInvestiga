@@ -1,6 +1,7 @@
 <div class="pdf-container">
+  @if(readyToShow) {
     <ngx-extended-pdf-viewer #pdfViewer
-      [src]="pdfSrc"
+      [src]="src"
       [zoom]="zoom"
       [(page)]="pageNumber"
       [textLayer]="true"
@@ -11,4 +12,5 @@
       [showHighlightEditor]="true"
     >
     </ngx-extended-pdf-viewer>
+  }
   </div>

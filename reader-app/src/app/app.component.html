@@ -14,18 +14,32 @@
 
     <div class="main-container" [class.with-search]="showSearchPanel" [class.with-comments]="showCommentsPanel">
       @if (viewerState) {
-        <app-document-viewer
-          class="document-viewer"
-          [pageNumber]="viewerState.pageNumber"
-          [occurrenceIndex]="viewerState.occurrenceIndex"
-          [lookingForText]="viewerState.searchText"
-          [src]="pdfContent"
-        ></app-document-viewer>
+          <app-document-viewer
+            class="document-viewer"
+            [documentId]="viewerState.documentUrl"
+            [pageNumber]="viewerState.pageNumber-1"
+            [occurrenceIndex]="viewerState.occurrenceIndex"
+            [lookingForText]="viewerState.searchText"
+            [delay]="0"
+          ></app-document-viewer>
       } @else {
         <div class="document-viewer-placeholder">
           Select a search result to view the document
         </div>
       }
+      <!-- <div class="pdf-viewer">
+        @if (pdfSrc) {
+          <ng2-pdfjs-viewer
+            #pdfViewer
+            [page]="pageToView"
+            (onDocumentLoad)="onDocumentLoaded($event)"
+            (onPageChange)="onDocumentPageChanged($event)"
+            [pdfSrc]="pdfSrc"></ng2-pdfjs-viewer>
+        }
+      </div> -->
+      <!-- <div class="pdf-viewer">
+        <ng2-pdfjs-viewer [page]="1" pdfSrc="/assets/f64f6cf5c3c4a8ba430c8f32251d92c2.pdf"></ng2-pdfjs-viewer>
+      </div> -->
     </div>
 
     @if (showCommentsPanel) {

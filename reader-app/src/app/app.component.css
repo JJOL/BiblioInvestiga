@@ -36,12 +36,21 @@
   overflow: hidden;
   transition: all 0.3s ease;
 }
+.pdf-viewer {
+  width: 100%;
+}
 
 .document-viewer {
+  flex: 1;
   height: 100%;
-  width: 100%;
   overflow-y: auto;
 }
+
+/* .document-viewer-container {
+  width: 48%;
+  background-color: red;
+  display: inline-block;
+} */
 
 .document-viewer-placeholder {
   height: 100%;

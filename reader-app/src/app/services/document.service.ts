@@ -142,10 +142,15 @@ export class DocumentService {
     return this.documents.find(doc => doc.id === id);
   }
 
-  getDocumentContentById(id: string): Observable<Uint8Array> {
-    return this.http.get(`${this.apiUrl}/documents/${id}/file`, { responseType: 'arraybuffer' })
-      .pipe(
-        map((response: any) => new Uint8Array(response))
-      );
+  getDocumentContentById(id: string): Promise<Uint8Array> {
+    return new Promise<Uint8Array>((resolve, reject) => {
+      this.http.get(`${this.apiUrl}/documents/${id}/file`, { responseType: 'arraybuffer' })
+        .pipe(
+          map((response: any) => new Uint8Array(response))
+        ).subscribe({
+          next: resolve,
+          error: reject
+        });
+    });
   }
 } 

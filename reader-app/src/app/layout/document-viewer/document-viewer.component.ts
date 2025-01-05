@@ -1,5 +1,6 @@
 import { ChangeDetectorRef, Component, Input, NgZone, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
 import { NgxExtendedPdfViewerComponent, NgxExtendedPdfViewerModule, PageRenderedEvent, PDFScriptLoaderService } from 'ngx-extended-pdf-viewer';
+import { DocumentService } from '../../services/document.service';
 
 
 
@@ -70,21 +71,48 @@ export class DocumentViewerComponent implements OnInit, OnChanges {
 
   @Input() src: string | Uint8Array = '';
   @Input() pdfSrc: string = '';
+  @Input() documentId: string = '';
   @Input() pageNumber: number = 5;
   @Input() lookingForText: string = 'Zacatlán a Amozoc';
   @Input() occurrenceIndex: number = 0;
 
+  @Input() delay = 0;
+
   previousHighlighted: HighlightableText[] = [];
 
-  constructor(private ngZone: NgZone, private readonly pdfScriptLoaderService: PDFScriptLoaderService) {}
+  readyToShow = false;
+
+  constructor(
+    private ngZone: NgZone,
+    private readonly pdfScriptLoaderService: PDFScriptLoaderService,
+    private documentService: DocumentService,
+  ) {}
 
   ngOnInit() {
+    if (this.delay > 0) {
+      setTimeout(() => {
+        this.documentService.getDocumentContentById(this.documentId).then((content) => {
+          console.log('Document content:', content);
+          this.src = content;
+          this.readyToShow = true;
+          this.applyHighlight(this.lookingForText);
+        });
+      }, this.delay);
+    }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     console.log('Changed looking for text:', this.lookingForText);
 
-    this.applyHighlight(this.lookingForText);
+    if (this.documentId.trim().length > 0 && this.delay == 0) {
+      this.documentService.getDocumentContentById(this.documentId).then((content) => {
+        console.log('Document content:', content);
+        this.src = content;
+        this.readyToShow = true;
+        this.applyHighlight(this.lookingForText);
+      });
+    }
+
 
   }
 

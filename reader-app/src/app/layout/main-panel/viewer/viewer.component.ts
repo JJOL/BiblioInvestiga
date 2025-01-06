@@ -15,6 +15,7 @@ import { DocumentService } from '../../../services/document.service';
 })
 export class ViewerComponent implements OnInit, OnChanges, AfterContentInit, AfterViewInit, OnDestroy {
 
+  @Output() openLibrary: EventEmitter<void> = new EventEmitter<void>();
   @Output() requestFocus: EventEmitter<void> = new EventEmitter<void>();
   @Input() focused: boolean = false;
   private _searchResult?: SearchResult;
@@ -76,6 +77,10 @@ export class ViewerComponent implements OnInit, OnChanges, AfterContentInit, Aft
     this.searchResult = undefined;
     this.selectDocument(document);
     // this.requestFocus.emit();
+  }
+
+  onTabsOpenLibrary(): void {
+    this.openLibrary.emit();
   }
 
   onTabsSelectionChange(document: Document): void {

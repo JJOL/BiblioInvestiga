@@ -5,7 +5,7 @@
     </div>
     
     <div class="ribbon-section">
-      <button class="ribbon-button" (click)="openLibrary()">
+      <button class="ribbon-button" (click)="onOpenLibrary()">
         <div class="button-content">
           <span class="material-icons">menu_book</span>
           <span class="button-label">My Library</span>
@@ -40,8 +40,3 @@
     </div> -->
   </div>
 </header>
-
-<app-library-modal 
-  *ngIf="showLibrary" 
-  (close)="closeLibrary()"
-></app-library-modal>

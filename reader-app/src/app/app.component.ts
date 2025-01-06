@@ -5,9 +5,9 @@ import { SearchResult } from './models/search.model';
 import { HeaderComponent } from './layout/header/header.component';
 import { SearchPanelComponent } from './layout/search-panel/search-panel.component';
 import { CommentsPanelComponent } from './layout/comments-panel/comments-panel.component';
-import { PdfJsViewerModule, PdfJsViewerComponent } from 'ng2-pdfjs-viewer';
-import { DocumentService } from './services/document.service';
 import { MainPanelComponent } from './layout/main-panel/main-panel.component';
+import { LibraryModalComponent } from './components/library-modal/library-modal.component';
+import { Document } from './models/document.model';
 
 interface ViewerState {
   pageNumber: number;
@@ -19,7 +19,7 @@ interface ViewerState {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, HeaderComponent, SearchPanelComponent, CommentsPanelComponent, MainPanelComponent],
+  imports: [HeaderComponent, SearchPanelComponent, CommentsPanelComponent, MainPanelComponent, LibraryModalComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
@@ -32,8 +32,7 @@ export class AppComponent {
   showCommentsPanel = false;
   showSplitView = false;
 
-  pdfUrl = "assets/FJR Autobiografía y Souvenirs.pdf"
-  pdfContent!: Uint8Array;
+  showLibraryModal = false;
 
   toggleSearchPanel(): void {
     this.showSearchPanel = !this.showSearchPanel;
@@ -54,6 +53,26 @@ export class AppComponent {
       occurrenceIndex: result.occurrenceIndex,
       searchText: result.text,
       documentUrl: result.document
+    };
+  }
+
+  onOpenLibraryModal(): void {
+    this.showLibraryModal = true;
+  }
+
+  onCloseLibraryModal(): void {
+    this.showLibraryModal = false;
+  }
+
+  onOpenDocument(document: Document): void {
+    this.showLibraryModal = false;
+    this.selectedSearchResult = {
+      document: document.id,
+      page: 1,
+      text: '',
+      occurrenceIndex: 0,
+      documentTitle: document.title,
+      context: ''
     };
   }
 }

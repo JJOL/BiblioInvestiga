@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { SearchResult } from '../../models/search.model';
 import { ViewerComponent } from './viewer/viewer.component';
 
@@ -11,6 +11,8 @@ import { ViewerComponent } from './viewer/viewer.component';
 })
 export class MainPanelComponent implements OnInit {
   private _showSplitView = false;
+
+  @Output() openLibrary = new EventEmitter<void>();
 
   @Input()
   public set showSplitView(value: boolean) {
@@ -83,5 +85,9 @@ export class MainPanelComponent implements OnInit {
   onUserClickViewer(viewerIndex: number): void {
     this.focusedViewer = viewerIndex;
     // alert(`User clicked on viewer ${viewerIndex}`);
+  }
+
+  onOpenLibrary(): void {
+    this.openLibrary.emit();
   }
 }

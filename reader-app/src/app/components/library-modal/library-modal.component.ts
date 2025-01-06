@@ -22,6 +22,9 @@ interface DocumentForm {
 })
 export class LibraryModalComponent implements OnInit {
   @Output() close = new EventEmitter<void>();
+  @Output() openDocument = new EventEmitter<Document>();
+
+
   documents: Document[] = [];
   showAddForm = false;
   isValidPDF = false;
@@ -103,6 +106,10 @@ export class LibraryModalComponent implements OnInit {
       author: '',
       publishedDate: ''
     };
+  }
+
+  onOpenDocumentClick(document: Document): void {
+    this.openDocument.emit(document);
   }
 
   @HostListener('click', ['$event'])

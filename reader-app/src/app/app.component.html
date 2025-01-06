@@ -3,6 +3,7 @@
     (toggleSearch)="toggleSearchPanel()"
     (toggleComments)="toggleCommentsPanel()"
     (toggleSplitView)="toggleSplitView()"
+    (openLibrary)="onOpenLibraryModal()"
   ></app-header>
   
   <div class="content-container">
@@ -19,6 +20,7 @@
         [showSplitView]="showSplitView"
         [searchResult]="selectedSearchResult"
         [isSearchOpen]="showSearchPanel"
+        (openLibrary)="onOpenLibraryModal()"
         >
       </app-main-panel>
       @if (viewerState) {
@@ -35,3 +37,10 @@
     }
   </div>
 </div>
+
+@if (showLibraryModal) {
+  <app-library-modal
+    (close)="onCloseLibraryModal()"
+    (openDocument)="onOpenDocument($event)"
+  ></app-library-modal>
+}

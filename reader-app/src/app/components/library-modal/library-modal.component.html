@@ -69,6 +69,7 @@
               <th>Added Date</th>
               <th>Pages</th>
               <th>Filename</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -79,6 +80,7 @@
               <td>{{doc.addedDate | date}}</td>
               <td>{{doc.numPages}}</td>
               <td>{{doc.originalFilename}}</td>
+              <td><button class="add-document-button" (click)="onOpenDocumentClick(doc)">Open</button></td>
             </tr>
           </tbody>
         </table>

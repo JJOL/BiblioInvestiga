@@ -1,11 +1,10 @@
 import { Component, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { LibraryModalComponent } from '../../components/library-modal/library-modal.component';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, LibraryModalComponent],
+  imports: [CommonModule],
   templateUrl: './header.component.html',
   styleUrl: './header.component.css'
 })
@@ -13,11 +12,12 @@ export class HeaderComponent {
   @Output() toggleSearch = new EventEmitter<void>();
   @Output() toggleComments = new EventEmitter<void>();
   @Output() toggleSplitView = new EventEmitter<void>();
+  @Output() openLibrary = new EventEmitter<void>();
   
   showLibrary = false;
 
-  openLibrary(): void {
-    this.showLibrary = true;
+  onOpenLibrary(): void {
+    this.openLibrary.emit();
   }
 
   closeLibrary(): void {

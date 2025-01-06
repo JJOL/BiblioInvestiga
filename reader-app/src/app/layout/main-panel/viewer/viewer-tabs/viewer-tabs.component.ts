@@ -12,6 +12,7 @@ import { Document } from '../../../../models/document.model';
 export class ViewerTabsComponent {
 
   @Output() loadLibDocument: EventEmitter<Document> = new EventEmitter<Document>();
+  @Output() openLibrary: EventEmitter<void> = new EventEmitter<void>();
   @Output() selectDocument: EventEmitter<Document> = new EventEmitter<Document>();
 
   @Input() loadedDocuments: Document[] = [];
@@ -32,7 +33,6 @@ export class ViewerTabsComponent {
 
   _ID = 0;
   onAddBtnClick() {
-    this.loadLibDocument.emit(this._libraryDocuments[this._ID]);
-    this._ID++;
+    this.openLibrary.emit();
   }
 }

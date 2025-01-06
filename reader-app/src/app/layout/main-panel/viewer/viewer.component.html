@@ -3,7 +3,7 @@
         [loadedDocuments]="loadedDocuments"
         [isFocused]="focused"
         [activeDocument]="activeDocument"
-        (loadLibDocument)="onTabsLoadLibDocument($event)"
+        (openLibrary)="onTabsOpenLibrary()"
         (selectDocument)="onTabsSelectionChange($event)"
     ></app-viewer-tabs>
     <app-document-viewer

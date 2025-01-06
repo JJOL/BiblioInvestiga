@@ -7,6 +7,7 @@
             [isSearchOpen]="isSearchOpen"
             (requestFocus)="focusFirstViewer()"
             (click)="onUserClickViewer(1)"
+            (openLibrary)="onOpenLibrary()"
         ></app-viewer>
     </div>
     @if (showSplitView) {
@@ -18,6 +19,7 @@
                 [isSearchOpen]="isSearchOpen"
                 (requestFocus)="focusSecondViewer()"
                 (click)="onUserClickViewer(2)"
+                (openLibrary)="onOpenLibrary()"
             ></app-viewer>
         </div>
     }

@@ -1,4 +1,4 @@
-import { AfterContentInit, AfterViewInit, ChangeDetectorRef, Component, Input, NgZone, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewChild } from '@angular/core';
+import { AfterContentInit, AfterViewInit, ChangeDetectorRef, Component, EventEmitter, Input, NgZone, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
 // import { NgxExtendedPdfViewerComponent, NgxExtendedPdfViewerModule, PageRenderedEvent, PDFScriptLoaderService } from 'ngx-extended-pdf-viewer';
 import { PdfJsViewerModule, PdfJsViewerComponent } from 'ng2-pdfjs-viewer';
 import { DocumentService } from '../../../../services/document.service';
@@ -22,7 +22,7 @@ class SingleSpanHighlightableText implements HighlightableText {
     const highlightedText = `${textBefore}<span class="highlight selected appended">${this.text}</span>${textAfter}`;
     this.span.innerHTML = highlightedText;
   }
-
+// 
   unhighlight(): void {
     this.span.innerHTML = this.originalText;
   }
@@ -69,6 +69,8 @@ class MultipleSpanHighlightableText implements HighlightableText {
 })
 export class DocumentViewerComponent implements OnInit, OnChanges, AfterContentInit, AfterViewInit, OnDestroy {
   @ViewChild('pdfViewerEl') pdfViewerEl: PdfJsViewerComponent | undefined;
+  
+  @Output() viewerClicked = new EventEmitter<void>();
 
   @Input() src: string | Uint8Array = '';
 
@@ -142,6 +144,16 @@ export class DocumentViewerComponent implements OnInit, OnChanges, AfterContentI
     this.pdfViewerEl!.PDFViewerApplication.eventBus.on('pagerendered', (event: any) => {
       this.onPageRendered(event);
     });
+    this.pdfViewerEl!.PDFViewerApplication.eventBus.on('textlayerrendered', (event: any) => {
+      this.onPageTextLayerRendered(event);
+    });
+
+    // mouse "click" event on document to refocus the viewer
+    this.pdfViewerEl!.PDFViewerApplication.appConfig.viewerContainer.addEventListener('click', () => {
+      this.onViewerClicked();
+    });
+
+
     this.lastLoadedDocumentId = this._document?.id;
   }
 
@@ -272,15 +284,17 @@ export class DocumentViewerComponent implements OnInit, OnChanges, AfterContentI
     this.previousHighlighted = [];
   }
 
-  applyHighlight(text: string, providedDivEl?: HTMLElement): boolean {
+  applyHighlight(text: string, providedDivEl: HTMLElement): boolean {
     console.log('applyHighight().Looking for text:', text);
-    let pageElement = document.querySelector(`.page[data-page-number="${this.pageNumber}"]`);
-    if (providedDivEl) {
-      pageElement = providedDivEl; 
-    }
+    // let pageElement = document.querySelector(`.page[data-page-number="${this.pageNumber}"]`);
+    // if (providedDivEl) {
+    //   pageElement = providedDivEl; 
+    // }
+    let pageElement = providedDivEl;
     if (pageElement) {
       console.log('FOUND DIV ')
-      const textLayerElement = pageElement.querySelector('.textLayer');
+      // const textLayerElement = pageElement.querySelector('.textLayer');
+      let textLayerElement = pageElement;
 
       if (textLayerElement) {
         console.log('FOUND TEXT LAYER')
@@ -322,10 +336,22 @@ export class DocumentViewerComponent implements OnInit, OnChanges, AfterContentI
         console.log('onPageRendered(). Looking for text:', this.searchResult?.text);
         let pageEl = event.source.div;
         console.log('Can use:', pageEl)
-        setTimeout(() => {
-
-          this.applyHighlight(this.searchResult!.text, pageEl);
-        }, 200);
+        
     }
+  }
+
+  onPageTextLayerRendered(event: any) {
+    console.log('DocumentViewer.onPageTextLayerRendered', event);
+    if (event.pageNumber === this.pageNumber && this.searchResult) {
+      console.log('onPageTextLayerRendered(): Target page Text Layer rendered! Ready to highlight text');
+      let pageEl = event.source.textLayerDiv;
+      setTimeout(() => {
+        this.applyHighlight(this.searchResult!.text, pageEl);
+      }, 200);
+    }
+  }
+
+  onViewerClicked() {
+    this.viewerClicked.emit();
   }
 }

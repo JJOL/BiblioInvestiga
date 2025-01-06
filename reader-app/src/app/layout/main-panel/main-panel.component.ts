@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
 import { SearchResult } from '../../models/search.model';
 import { ViewerComponent } from './viewer/viewer.component';
 
@@ -47,6 +47,8 @@ export class MainPanelComponent implements OnInit {
   @ViewChild('firstViewer') firstViewer!: ViewerComponent;
   @ViewChild('secondViewer') secondViewer?: ViewerComponent;
 
+  constructor(private cdr: ChangeDetectorRef) { }
+
   focusedViewer: number = 1;
 
   firstSearchResult: SearchResult | undefined;
@@ -58,10 +60,12 @@ export class MainPanelComponent implements OnInit {
 
   focusFirstViewer(): void {
     this.focusedViewer = 1;
+    this.cdr.detectChanges();
   }
 
   focusSecondViewer(): void {
     this.focusedViewer = 2;
+    this.cdr.detectChanges();
   }
 
   isFirstViewerFocused(): boolean {
@@ -74,5 +78,10 @@ export class MainPanelComponent implements OnInit {
 
   getViewerSearchResult(viewerIndex: number): SearchResult | undefined {
     return viewerIndex === 1 ? this.firstSearchResult : this.secondSearchResult;
+  }
+
+  onUserClickViewer(viewerIndex: number): void {
+    this.focusedViewer = viewerIndex;
+    // alert(`User clicked on viewer ${viewerIndex}`);
   }
 }

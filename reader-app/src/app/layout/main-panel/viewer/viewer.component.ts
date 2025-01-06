@@ -75,12 +75,16 @@ export class ViewerComponent implements OnInit, OnChanges, AfterContentInit, Aft
     this.loadedDocuments.push(document);
     this.searchResult = undefined;
     this.selectDocument(document);
-    this.requestFocus.emit();
+    // this.requestFocus.emit();
   }
 
   onTabsSelectionChange(document: Document): void {
     this.searchResult = undefined;
     this.selectDocument(document);
+    // this.requestFocus.emit();
+  }
+
+  onViewerClicked(): void {
     this.requestFocus.emit();
   }
 }

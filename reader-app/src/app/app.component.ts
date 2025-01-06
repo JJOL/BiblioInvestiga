@@ -23,7 +23,7 @@ interface ViewerState {
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
-export class AppComponent implements OnInit {
+export class AppComponent {
   title = 'reader-app';
   
   viewerState: ViewerState | null = null;
@@ -55,36 +55,5 @@ export class AppComponent implements OnInit {
       searchText: result.text,
       documentUrl: result.document
     };
-  }
-
-  constructor(private documentService: DocumentService) {}
-
-  async ngOnInit(): Promise<void> {
-    this.pdfSrc = await this.documentService.getDocumentContentById('b17f58de102ffa70e76e24a5107b3478');
-  }
-
-  pageToView = 1
-
-  @ViewChild('pdfViewer') pdfViewer: PdfJsViewerComponent | undefined;
-
-  pdfSrc: string | Uint8Array | undefined = undefined;
-  onDocumentLoaded(event: any): void {
-    console.log('Document loaded:', event);
-    this.pageToView = 81;
-
-    if (this.pdfViewer) {
-      let app = this.pdfViewer.PDFViewerApplication;
-      console.log('PDFViewerApplication:', app);
-      app.eventBus.on('pagerendered', (x: any) => {
-        this.onPageRendered(x);
-      });
-    }
-  }
-
-  onDocumentPageChanged(event: any): void {
-    console.log('Document page changed:', event);
-  }
-
-  onPageRendered(event: any): void {
   }
 }

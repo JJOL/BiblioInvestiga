@@ -1,7 +1,9 @@
-import { ChangeDetectorRef, Component, Input, NgZone, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
+import { AfterContentInit, AfterViewInit, ChangeDetectorRef, Component, Input, NgZone, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewChild } from '@angular/core';
 // import { NgxExtendedPdfViewerComponent, NgxExtendedPdfViewerModule, PageRenderedEvent, PDFScriptLoaderService } from 'ngx-extended-pdf-viewer';
+import { PdfJsViewerModule, PdfJsViewerComponent } from 'ng2-pdfjs-viewer';
 import { DocumentService } from '../../../../services/document.service';
 import { Document } from '../../../../models/document.model';
+import { SearchResult } from '../../../../models/search.model';
 
 
 interface HighlightableText {
@@ -61,25 +63,68 @@ class MultipleSpanHighlightableText implements HighlightableText {
 @Component({
   selector: 'app-document-viewer',
   standalone: true,
-  imports: [],
+  imports: [PdfJsViewerModule],
   templateUrl: './document-viewer.component.html',
   styleUrl: './document-viewer.component.css'
 })
-export class DocumentViewerComponent implements OnInit, OnChanges {
-  @ViewChild('pdfViewer') pdfViewer!: any;
-  zoom = 'auto';
+export class DocumentViewerComponent implements OnInit, OnChanges, AfterContentInit, AfterViewInit, OnDestroy {
+  @ViewChild('pdfViewerEl') pdfViewerEl: PdfJsViewerComponent | undefined;
 
   @Input() src: string | Uint8Array = '';
-  @Input() pdfSrc: string = '';
-  @Input() documentId: string = '';
-  @Input() document?: Document;
-  @Input() pageNumber: number = 5;
-  @Input() lookingForText: string = 'Zacatlán a Amozoc';
-  @Input() occurrenceIndex: number = 0;
+
+  private _document?: Document;
+  @Input()
+  public set document(value: Document | undefined) {
+    console.log('DocumentViewer.setDocument', value);
+    this._document = value;
+    if (this._document) {
+      console.log('Opening document...', this._document);
+        this.documentService.getDocumentContentById(this._document.id).then((content) => {
+          console.log('Document Loaded!');
+          this.src = content;
+          if (this.pdfViewerEl) {
+            console.log('Refreshing PDF Viewer');
+            this.pdfViewerEl.pdfSrc = content;
+            this.pdfViewerEl.refresh();
+          }
+        });
+    }
+  };
+  public get document(): Document | undefined {
+    return this._document;
+  }
+
+  private _searchResult?: SearchResult;
+  @Input()
+  public set searchResult(value: SearchResult | undefined) {
+    console.log('DocumentViewer.setSearchResult', value);
+    if (value) {
+      this._searchResult = value;
+
+      if (this.lastLoadedDocumentId != this._searchResult.document) {
+        this.bufferedPageNumber = this._searchResult.page;
+      } else {
+        this.pageNumber = this._searchResult.page;
+        // this.applyHighlight(this._searchResult.text);
+      }
+
+      if (this.pdfViewerEl) {
+        // DO HIGHILIGHT Searched Text
+      } else {
+      }
+    }
+  }
+  public get searchResult(): SearchResult | undefined {
+    return this._searchResult;
+  }
+
+  pageNumber: number = 1;
+  bufferedPageNumber?: number;
+  lastLoadedDocumentId?: string;
 
   @Input() isSearchOpen = false;
 
-  @Input() delay = 0;
+  _hasInitPdfApplication = false;
 
   previousHighlighted: HighlightableText[] = [];
 
@@ -87,36 +132,45 @@ export class DocumentViewerComponent implements OnInit, OnChanges {
 
   constructor(
     private ngZone: NgZone,
-    // // private readonly pdfScriptLoaderService: PDFScriptLoaderService,
     private documentService: DocumentService,
   ) {}
+  
+  onDocumentLoaded(event: any): void {
+    console.log('DocumentViewer.onDocumentLoaded', event);
+
+    console.log('Initializing PDF Application Listeners');
+    this.pdfViewerEl!.PDFViewerApplication.eventBus.on('pagerendered', (event: any) => {
+      this.onPageRendered(event);
+    });
+    this.lastLoadedDocumentId = this._document?.id;
+  }
 
   ngOnInit() {
-    if (this.delay > 0) {
-      setTimeout(() => {
-        this.documentService.getDocumentContentById(this.documentId).then((content) => {
-          console.log('Document content:', content);
-          this.src = content;
-          this.readyToShow = true;
-          this.applyHighlight(this.lookingForText);
-        });
-      }, this.delay);
-    }
+    console.log('DocumentViewer.ngOnInit');
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    console.log('Changed looking for text:', this.lookingForText);
+    console.log('DocumentViewer.ngOnChanges');
+    // console.log('Changed looking for text:', this.lookingForText);
 
-    if (this.documentId.trim().length > 0 && this.delay == 0) {
-      this.documentService.getDocumentContentById(this.documentId).then((content) => {
-        console.log('Document content:', content);
-        this.src = content;
-        this.readyToShow = true;
-        this.applyHighlight(this.lookingForText);
-      });
-    }
+    // if (this.documentId.trim().length > 0 && this.delay == 0) {
+    //   this.documentService.getDocumentContentById(this.documentId).then((content) => {
+    //     console.log('Document content:', content);
+    //     this.src = content;
+    //     this.readyToShow = true;
+    //     this.applyHighlight(this.lookingForText);
+    //   });
+    // }
+  }
+  ngAfterViewInit(): void {
+    console.log('DocumentViewer.ngAfterViewInit');
+  }
+  ngAfterContentInit(): void {
+    console.log('DocumentViewer.ngAfterContentInit');
+  }
 
-
+  ngOnDestroy(): void {
+    console.log('DocumentViewer.ngOnDestroy');
   }
 
   findTextInElements(text: string, elements: HTMLElement[]): HighlightableText[] {
@@ -124,6 +178,8 @@ export class DocumentViewerComponent implements OnInit, OnChanges {
     
     // Normalize the search text (case-insensitive, remove diacritics)
     const normalizedSearchText = text
+        .replace(/\s+/g, ' ')
+        .trim()
         .toLowerCase()
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '');
@@ -136,6 +192,8 @@ export class DocumentViewerComponent implements OnInit, OnChanges {
       var span = elements[i];
       // Normalize the span text for comparison
       let normalizedSpanText = (span.textContent || '')
+          .replace(/\s+/g, ' ')
+          .trim()
           .toLowerCase()
           .normalize('NFD')
           .replace(/[\u0300-\u036f]/g, '');
@@ -214,21 +272,29 @@ export class DocumentViewerComponent implements OnInit, OnChanges {
     this.previousHighlighted = [];
   }
 
-  applyHighlight(text: string): boolean {
-    const pageElement = document.querySelector(`.page[data-page-number="${this.pageNumber}"]`);
+  applyHighlight(text: string, providedDivEl?: HTMLElement): boolean {
+    console.log('applyHighight().Looking for text:', text);
+    let pageElement = document.querySelector(`.page[data-page-number="${this.pageNumber}"]`);
+    if (providedDivEl) {
+      pageElement = providedDivEl; 
+    }
     if (pageElement) {
+      console.log('FOUND DIV ')
       const textLayerElement = pageElement.querySelector('.textLayer');
 
-      console.log('PDFViewer', this.pdfViewer);
-
       if (textLayerElement) {
+        console.log('FOUND TEXT LAYER')
         this.clearPreviousHighlight();
         const spanElements = Array.from(textLayerElement.querySelectorAll('span'));
-        const foundElements = this.findTextInElements(this.lookingForText, spanElements);
+        console.log('Checking elements:', spanElements);
+        const checkingElementTexts = spanElements.map((el) => el.textContent);
+        console.log('Checking elements text:', checkingElementTexts);
+        const foundElements = this.findTextInElements(this.searchResult!.text, spanElements);
+        console.log('Found elements:', foundElements);
 
-        if (this.occurrenceIndex < foundElements.length) {
-          foundElements[this.occurrenceIndex].highlight();
-          this.previousHighlighted.push(foundElements[this.occurrenceIndex]);
+        if (this.searchResult!.occurrenceIndex < foundElements.length) {
+          foundElements[this.searchResult!.occurrenceIndex].highlight();
+          this.previousHighlighted.push(foundElements[this.searchResult!.occurrenceIndex]);
         } else {
           console.log('No more occurrences found');
         }
@@ -241,19 +307,25 @@ export class DocumentViewerComponent implements OnInit, OnChanges {
   }
 
   onPageRendered(event: any) {
-    setTimeout(() => {
-      console.log('Looking for text:', this.lookingForText);
-      if (event.pageNumber === this.pageNumber) {
-        this.applyHighlight(this.lookingForText);
-      }
-    }, 100);
-  }
+    console.log('DocumentViewer.onPageRendered', event);
+    if (this.bufferedPageNumber && this.bufferedPageNumber != this.pageNumber) {
+      setTimeout(() => {
+        this.ngZone.run(() => {
+          this.pageNumber = this.bufferedPageNumber!;
+          this.bufferedPageNumber = undefined;
+        });
+      }, 200);
+    }
 
-  openPageOfInterest(pageNumber: number) {
-    this.pageNumber = pageNumber;
-  }
+    if (event.pageNumber === this.pageNumber && this.searchResult) {
+      // setTimeout(() => {
+        console.log('onPageRendered(). Looking for text:', this.searchResult?.text);
+        let pageEl = event.source.div;
+        console.log('Can use:', pageEl)
+        setTimeout(() => {
 
-  setPage(): number {
-    return this.pdfViewer.page!;
+          this.applyHighlight(this.searchResult!.text, pageEl);
+        }, 200);
+    }
   }
 }

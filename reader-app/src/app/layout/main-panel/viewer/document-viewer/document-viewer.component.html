@@ -1,32 +1,7 @@
 <div class="pdf-container">
-  <p>document-viewer works</p>
-  @if (document) {
-    <p>Document: {{ document.title }}</p>
-    <p>DocID: {{ document.id }}</p>
-  }
-
-  <hr>
-  <div>
-    <span>Page: {{ pageNumber }}</span><br>
-    <span>Occurrence: {{ occurrenceIndex }}</span><br>
-    <span>Looking: {{ lookingForText }}</span>
-  </div>
-  <hr>
-  <div>
-    <span>Show Search Highlighting: {{ isSearchOpen ? '1' : '0'}}</span>
-  </div>
-  @if(readyToShow) {
-    <!-- <ngx-extended-pdf-viewer #pdfViewer
-      [src]="src"
-      [zoom]="zoom"
-      [(page)]="pageNumber"
-      [textLayer]="true"
-      (pageRendered)="onPageRendered($event)"
-      [handTool]="false"
-      [showSecondaryToolbarButton]="false"
-      [showOpenFileButton]="false"
-      [showHighlightEditor]="true"
-    >
-    </ngx-extended-pdf-viewer> -->
-  }
-  </div>
+  <ng2-pdfjs-viewer #pdfViewerEl
+    [pdfSrc]="src"
+    [page]="pageNumber"
+    (onDocumentLoad)="onDocumentLoaded($event)"
+  ></ng2-pdfjs-viewer>
+</div>

@@ -76,12 +76,15 @@ export class AppComponent implements OnInit {
       let app = this.pdfViewer.PDFViewerApplication;
       console.log('PDFViewerApplication:', app);
       app.eventBus.on('pagerendered', (x: any) => {
-        console.log('Page rendered:', x);
+        this.onPageRendered(x);
       });
     }
   }
 
   onDocumentPageChanged(event: any): void {
     console.log('Document page changed:', event);
+  }
+
+  onPageRendered(event: any): void {
   }
 }

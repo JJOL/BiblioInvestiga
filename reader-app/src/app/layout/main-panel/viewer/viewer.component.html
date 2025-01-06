@@ -3,14 +3,12 @@
         [loadedDocuments]="loadedDocuments"
         [isFocused]="focused"
         [activeDocument]="activeDocument"
-        (loadLibDocument)="loadLibDocument($event)"
-        (selectDocument)="selectDocument($event)"
+        (loadLibDocument)="onTabsLoadLibDocument($event)"
+        (selectDocument)="onTabsSelectionChange($event)"
     ></app-viewer-tabs>
     <app-document-viewer
         [document]="activeDocument"
-        [pageNumber]="searchResult?.page ?? 0"
-        [occurrenceIndex]="searchResult?.occurrenceIndex ?? 0"
-        [lookingForText]="searchResult?.text ?? ''"
+        [searchResult]="searchResult"
         [isSearchOpen]="isSearchOpen"
     ></app-document-viewer>
 </div>

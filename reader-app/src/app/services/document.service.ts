@@ -11,6 +11,13 @@ export interface DocumentIdentification {
   documentId: string;
 }
 
+export interface DocumentIdentificationRequest {
+  file: {
+    filename: string;
+    data: Uint8Array;
+  }
+}
+
 export interface DocumentIdentificationResponse {
   success: boolean;
   info: DocumentIdentification;
@@ -23,24 +30,35 @@ export interface DocumentUpload {
   file: File;
 }
 
+export interface DocumentUploadRequest {
+  title: string;
+  author: string;
+  publishedDate: string;
+  file: {
+    filename: string;
+    data: Uint8Array;
+  }
+}
+
 export interface DocumentUploadResponse {
   success: boolean;
   document: Document;
 }
 
+export interface DocumentListRequest {}
+
 export interface DocumentsListResponse {
   documents: Document[];
 }
 
-// interface ElectronAPI {
-//   uploadDocument(uploadPayload: { documentInfo: Document, file: File }): Promise<void>;
-// }
+export interface GetDocumentContentRequest {
+  documentId: string;
+}
 
-// declare global {
-//   interface Window {
-//     electronAPI: ElectronAPI
-//   }
-// }
+export interface GetDocumentContentResponse {
+  success: boolean;
+  data: Uint8Array;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -63,7 +81,11 @@ export class DocumentService {
   }
 
   private _electronLoadDocuments() {
-    throw new Error('Method not implemented.');
+    window.electronAPI.ipcCall<DocumentListRequest, DocumentsListResponse>('get-documents', {})
+      .then(resp => {
+        this.documents = resp.documents;
+        this.documentsSubject.next(this.documents);
+      });
   }
 
   private _httpLoadDocuments() {
@@ -87,7 +109,19 @@ export class DocumentService {
   }
 
   private async _electronUploadDocument(upload: DocumentUpload): Promise<Document> {
-    throw new Error('Method not implemented.');
+    let req: DocumentUploadRequest = {
+      title: upload.title,
+      author: upload.author,
+      publishedDate: upload.publishedDate.toISOString(),
+      file: {
+        filename: upload.file.name,
+        data: new Uint8Array(await upload.file.arrayBuffer())
+      }
+    };
+    let resp = await window.electronAPI.ipcCall<DocumentUploadRequest, DocumentUploadResponse>('upload-document', req);
+    this.documents.push(resp.document);
+    this.documentsSubject.next(this.documents);
+    return resp.document;
   }
 
   private async _httpUploadDocument(upload: DocumentUpload): Promise<Document> {
@@ -120,8 +154,15 @@ export class DocumentService {
     }
   }
 
-  private _electronIdentifyDocumentToUpload(file: File): Promise<DocumentIdentification> {
-    throw new Error('Method not implemented.');
+  private async _electronIdentifyDocumentToUpload(file: File): Promise<DocumentIdentification> {
+    let req: DocumentIdentificationRequest = {
+      file: {
+        filename: file.name,
+        data: new Uint8Array(await file.arrayBuffer())
+      }
+    };
+    let resp = await window.electronAPI.ipcCall<DocumentIdentificationRequest, DocumentIdentificationResponse>('identify-document', req);
+    return resp.info;
   }
 
   private _httpIdentifyDocumentToUpload(file: File): Promise<DocumentIdentification> {
@@ -143,6 +184,19 @@ export class DocumentService {
   }
 
   getDocumentContentById(id: string): Promise<Uint8Array> {
+    if (window.electronAPI) {
+      return this._electronGetDocumentContent(id);
+    } else {
+      return this._httpGetDocumentContent(id);
+    }
+  }
+
+  private async _electronGetDocumentContent(id: string): Promise<Uint8Array> {
+    let resp = await window.electronAPI.ipcCall<GetDocumentContentRequest, GetDocumentContentResponse>('get-document', { documentId: id });
+    return resp.data;
+  }
+
+  private _httpGetDocumentContent(id: string): Promise<Uint8Array> {
     return new Promise<Uint8Array>((resolve, reject) => {
       this.http.get(`${this.apiUrl}/documents/${id}/file`, { responseType: 'arraybuffer' })
         .pipe(

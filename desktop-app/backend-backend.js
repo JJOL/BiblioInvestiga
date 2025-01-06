@@ -5,18 +5,16 @@ const {
     createHash,
   } = require('node:crypto');
 
-
-
+  
 function generateDocumentId(title, filename) {
     const uniqueString = `${title}-${filename}-${Date.now()}`;
     return createHash('md5').update(uniqueString).digest('hex');
-  }
+}
 
-
-function findTextInDocument(searchedText, documentFileName) {
+function findTextInDocument(searchedText, textsFolder, documentFileName) {
     try {
         // Read the document content from the texts folder
-        const textContentPath = `texts/${documentFileName}`;
+        const textContentPath = path.join(textsFolder, documentFileName);
         if (!fs.existsSync(textContentPath)) {
             throw new Error('Document content not found');
         }
@@ -80,9 +78,8 @@ function findTextInDocument(searchedText, documentFileName) {
     }
 }
 
-function findTextInAllDocuments(searchedText) {
+function findTextInAllDocuments(searchedText, textsFolder) {
     try {
-        const textsFolder = 'texts';
         const files = fs.readdirSync(textsFolder);
         let allResults = [];
 
@@ -90,7 +87,7 @@ function findTextInAllDocuments(searchedText) {
         files.filter(file => file.endsWith('.json'))
              .forEach(file => {
                 try {
-                    const results = findTextInDocument(searchedText, file);
+                    const results = findTextInDocument(searchedText, textsFolder, file);
                     allResults = allResults.concat(results);
                 } catch (error) {
                     console.error(`Error searching in ${file}:`, error);

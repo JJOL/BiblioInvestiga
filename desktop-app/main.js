@@ -7,8 +7,8 @@ const { buffer } = require('stream/consumers');
 
 function createWindow() {
     const mainWindow = new BrowserWindow({
-        width: 800,
-        height: 600,
+        width: 1200,
+        height: 900,
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: true,
@@ -17,8 +17,11 @@ function createWindow() {
     });
 
     mainWindow.loadFile('dist/reader-app/browser/index.html');
-    mainWindow.webContents.openDevTools();
+    // mainWindow.webContents.openDevTools();
 }
+
+const TEXTS_FOLDER = 'texts';
+const UPLOADS_FOLDER = 'uploads';
 
 ipcMain.handle('identify-document', async (event, request) => {
     let filename = request.file.filename;
@@ -51,17 +54,36 @@ ipcMain.handle('identify-document', async (event, request) => {
     };
 });
 
-ipcMain.handle('search-document', async (event, { searchedText, filename}) => {
+ipcMain.handle('search-document', async (event, request) => {
+    let searchedText = request.searchedText;
+    let filename = request.filename;
     let results = [];
+
+    if (!fs.existsSync(TEXTS_FOLDER)) {
+        fs.mkdirSync(TEXTS_FOLDER);
+    }
+    
     if (filename === undefined) {
-        results = backend.findTextInAllDocuments(searchedText);
+        results = backend.findTextInAllDocuments(searchedText, TEXTS_FOLDER);
     } else if (filename.length > 0) {
-        results = backend.findTextInDocument(searchedText, filename);
+        results = backend.findTextInDocument(searchedText, TEXTS_FOLDER, `${filename}.json`);
     } else {
         results = [];
     }
 
-    return { results };
+    const documents = JSON.parse(fs.readFileSync('documents.json', 'utf8'));
+    results = results.map(result => {
+        const document = documents.find(doc => doc.id === result.document);
+        return {
+            ...result,
+            documentTitle: document ? document.title : 'Unknown'
+        };
+    });
+
+    return {
+        success: true,
+        results
+    };
 });
 
 ipcMain.handle('upload-document', async (event, request) => {
@@ -83,10 +105,10 @@ ipcMain.handle('upload-document', async (event, request) => {
     }
 
     let documentId = backend.generateDocumentId(meta.title, filename);
-    let filePath = path.join('uploads', `${documentId}.pdf`);
+    let filePath = path.join(UPLOADS_FOLDER, `${documentId}.pdf`);
     // Create the folder if it doesn't exist
-    if (!fs.existsSync('uploads')) {
-        fs.mkdirSync('uploads');
+    if (!fs.existsSync(UPLOADS_FOLDER)) {
+        fs.mkdirSync(UPLOADS_FOLDER);
     }
     // Save the file
     fs.writeFileSync(filePath, Buffer.from(data));
@@ -110,6 +132,16 @@ ipcMain.handle('upload-document', async (event, request) => {
     };
     documents.push(newDocument);
     fs.writeFileSync('documents.json', JSON.stringify(documents, null, 2));
+
+    if (!fs.existsSync(TEXTS_FOLDER)) {
+        fs.mkdirSync(TEXTS_FOLDER);
+    }
+    const textContentFileName = `${TEXTS_FOLDER}/${documentId}.json`;
+    const textContent = fileInfo.pagesContent.map((pageContent, index) => ({
+        page: index + 1,
+        content: pageContent
+    }));
+    fs.writeFileSync(textContentFileName, JSON.stringify(textContent, null, 2));
 
     return {
         success: true,
@@ -139,7 +171,7 @@ ipcMain.handle('get-documents', async (event, request) => {
 
 ipcMain.handle('get-document', async (event, request) => {
     try {
-        const buffer = fs.readFileSync(path.join('uploads', `${request.documentId}.pdf`));
+        const buffer = fs.readFileSync(path.join(UPLOADS_FOLDER, `${request.documentId}.pdf`));
 
         return {
             success: true,

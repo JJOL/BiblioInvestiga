@@ -7,24 +7,15 @@ import { DocumentService } from './document.service';
 import { Document } from '../models/document.model';
 import {} from './apis';
 
-interface Search {
+export interface Search {
   searchedText: string;
   documentId?: string;
 }
 
-interface SearchResponse {
+export interface SearchResponse {
   results: SearchResult[];
 }
 
-// interface ElectronAPI {
-//   searchDocument(payload: { searchedText: string, documentId?: string }): Promise<SearchResponse>;
-// }
-
-// declare global {
-//   interface Window {
-//     electronAPI: ElectronAPI
-//   }
-// }
 
 @Injectable({
   providedIn: 'root'
@@ -51,8 +42,11 @@ export class SearchService {
     }
   }
 
-  private _electronSearch(payload: any): Observable<SearchResult[]> {
-    throw new Error('Method not implemented.')
+  private _electronSearch(payload: Search): Observable<SearchResult[]> {
+    return from(window.electronAPI.ipcCall<Search, SearchResponse>('search-document', payload))
+      .pipe(
+        map(response => response.results)
+      );
   }
 
   private _httpSearch(search: Search): Observable<SearchResult[]> {

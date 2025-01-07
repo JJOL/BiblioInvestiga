@@ -16,6 +16,13 @@ module.exports = {
       platforms: ['darwin'],
     },
     {
+      name: '@electron-forge/maker-dmg',
+      config: {
+        background: './assets/dmg-background.png',
+        format: 'ULFO'
+      }
+    },
+    {
       name: '@electron-forge/maker-deb',
       config: {},
     },
@@ -23,6 +30,13 @@ module.exports = {
       name: '@electron-forge/maker-rpm',
       config: {},
     },
+    {
+      name: '@electron-forge/maker-wix',
+      config: {
+        language: 1033,
+        manufacturer: 'MIsPS'
+      }
+    }
   ],
   plugins: [
     {

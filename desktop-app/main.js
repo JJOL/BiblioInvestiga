@@ -5,6 +5,15 @@ const fs = require('fs');
 const backend = require('./backend-core');
 const { buffer } = require('stream/consumers');
 
+const APP_DIR = app.getPath("userData");
+const STORAGE_DIR = path.join(APP_DIR, 'appstorage');
+if (!fs.existsSync(STORAGE_DIR)) {
+    fs.mkdirSync(STORAGE_DIR, {
+        recursive: true
+    });
+}
+console.log('STORAGE_DIR:', STORAGE_DIR);
+
 function createWindow() {
     const mainWindow = new BrowserWindow({
         width: 1200,
@@ -20,8 +29,18 @@ function createWindow() {
     // mainWindow.webContents.openDevTools();
 }
 
-const TEXTS_FOLDER = 'texts';
-const UPLOADS_FOLDER = 'uploads';
+const TEXTS_FOLDER = path.join(STORAGE_DIR, 'texts');
+if (!fs.existsSync(TEXTS_FOLDER)) {
+    fs.mkdirSync(TEXTS_FOLDER);
+}
+const UPLOADS_FOLDER = path.join(STORAGE_DIR, 'uploads');
+if (!fs.existsSync(UPLOADS_FOLDER)) {
+    fs.mkdirSync(UPLOADS_FOLDER);
+}
+const DOCUMENTS_BD_FILE = path.join(STORAGE_DIR, 'documents.json')
+if (!fs.existsSync(DOCUMENTS_BD_FILE)) {
+    fs.writeFileSync(DOCUMENTS_BD_FILE, JSON.stringify([]));
+}
 
 ipcMain.handle('identify-document', async (event, request) => {
     let filename = request.file.filename;
@@ -71,7 +90,7 @@ ipcMain.handle('search-document', async (event, request) => {
         results = [];
     }
 
-    const documents = JSON.parse(fs.readFileSync('documents.json', 'utf8'));
+    const documents = JSON.parse(fs.readFileSync(DOCUMENTS_BD_FILE, 'utf8'));
     results = results.map(result => {
         const document = documents.find(doc => doc.id === result.document);
         return {
@@ -116,7 +135,7 @@ ipcMain.handle('upload-document', async (event, request) => {
     // Load Documents from documents.json
     let documents = [];
     try {
-        documents = JSON.parse(fs.readFileSync('documents.json'));
+        documents = JSON.parse(fs.readFileSync(DOCUMENTS_BD_FILE));
     } catch (error) {
         console.error('Error reading documents.json: ', error);
     }
@@ -131,7 +150,7 @@ ipcMain.handle('upload-document', async (event, request) => {
         numPages: fileInfo.numPages
     };
     documents.push(newDocument);
-    fs.writeFileSync('documents.json', JSON.stringify(documents, null, 2));
+    fs.writeFileSync(DOCUMENTS_BD_FILE, JSON.stringify(documents, null, 2));
 
     if (!fs.existsSync(TEXTS_FOLDER)) {
         fs.mkdirSync(TEXTS_FOLDER);
@@ -151,14 +170,14 @@ ipcMain.handle('upload-document', async (event, request) => {
 
 ipcMain.handle('get-documents', async (event, request) => {
     // if documents.json doesn't exist, create it with an empty array
-    if (!fs.existsSync('documents.json')) {
-        fs.writeFileSync('documents.json', JSON.stringify([]));
+    if (!fs.existsSync(DOCUMENTS_BD_FILE)) {
+        fs.writeFileSync(DOCUMENTS_BD_FILE, JSON.stringify([]));
     }
 
     // Load Documents from documents.json
     let documents = [];
     try {
-        documents = JSON.parse(fs.readFileSync('documents.json'));
+        documents = JSON.parse(fs.readFileSync(DOCUMENTS_BD_FILE));
     } catch (error) {
         console.error('Error reading documents.json: ', error);
     }

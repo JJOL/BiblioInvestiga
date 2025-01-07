@@ -13,6 +13,8 @@ backend/texts
 backend/uploads
 backend/documents.json
 
+desktop-app/out
+
 node_modules
 
 # Node

@@ -5,18 +5,18 @@
         type="text" 
         [(ngModel)]="searchText" 
         (ngModelChange)="onSearch()"
-        placeholder="Search in document..."
+        placeholder="Buscar patrón..."
         class="search-input"
       >
     </div>
   
     <div class="results-container">
       <div *ngIf="results.length === 0 && searchText" class="no-results">
-        No results found
+        No se encontraron coincidencias
       </div>
       
       <div *ngIf="results.length > 0" class="results-count">
-        Found {{ results.length }} results
+        Se encontró {{ results.length }} coincidencias
       </div>
   
       <div class="results-list">
@@ -26,7 +26,7 @@
           (click)="selectResult(result)"
         >
           <div class="result-title">{{ result.context }}</div>
-          <div class="result-page">Page {{ result.page }}</div>
+          <div class="result-page">Página {{ result.page }}</div>
           <div class="result-context">{{ result.documentTitle }}</div>
           <div class="result-index">{{ i + 1 }}</div>
         </div>

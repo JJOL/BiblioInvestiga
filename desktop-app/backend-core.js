@@ -79,21 +79,34 @@ function findTextInDocument(searchedText, textsFolder, documentFileName) {
 }
 
 function findTextInAllDocuments(searchedText, textsFolder) {
+    const MAX_RESULTS_SIZE = 1000;
     try {
         const files = fs.readdirSync(textsFolder);
         let allResults = [];
 
         // Filter for .json files and search in each document
-        files.filter(file => file.endsWith('.json'))
-             .forEach(file => {
-                try {
-                    const results = findTextInDocument(searchedText, textsFolder, file);
-                    allResults = allResults.concat(results);
-                } catch (error) {
-                    console.error(`Error searching in ${file}:`, error);
-                    // Continue with other files even if one fails
+        for (let file of files.filter(file => file.endsWith('.json'))) {
+            try {
+                const results = findTextInDocument(searchedText, textsFolder, file);
+                allResults = allResults.concat(results);
+                if (allResults.length > MAX_RESULTS_SIZE) {
+                    return [];
                 }
-             });
+            } catch (error) {
+                console.error(`Error searching in ${file}:`, error);
+                // Continue with other files even if one fails
+            }
+        }
+        // files.filter(file => file.endsWith('.json'))
+        //      .forEach(file => {
+        //         try {
+        //             const results = findTextInDocument(searchedText, textsFolder, file);
+        //             allResults = allResults.concat(results);
+        //         } catch (error) {
+        //             console.error(`Error searching in ${file}:`, error);
+        //             // Continue with other files even if one fails
+        //         }
+        //      });
 
         return allResults;
     } catch (error) {

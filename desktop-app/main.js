@@ -42,6 +42,16 @@ if (!fs.existsSync(DOCUMENTS_BD_FILE)) {
     fs.writeFileSync(DOCUMENTS_BD_FILE, JSON.stringify([]));
 }
 
+// import worker module and spawn 'search.worker.js' worker. It will post a string message to be printed
+const worker = require('worker_threads');
+let searchWorkerCb = undefined;
+const searchWorker = new worker.Worker(path.join(__dirname, 'search.worker.js'));
+searchWorker.on('message', (response) => {
+    if (searchWorkerCb) {
+        searchWorkerCb(response);
+    }
+});
+
 ipcMain.handle('identify-document', async (event, request) => {
     let filename = request.file.filename;
     let data = request.file.data; // UInt8Array
@@ -73,36 +83,43 @@ ipcMain.handle('identify-document', async (event, request) => {
     };
 });
 
-ipcMain.handle('search-document', async (event, request) => {
-    let searchedText = request.searchedText;
-    let filename = request.filename;
-    let results = [];
-
-    if (!fs.existsSync(TEXTS_FOLDER)) {
-        fs.mkdirSync(TEXTS_FOLDER);
-    }
-    
-    if (filename === undefined) {
-        results = backend.findTextInAllDocuments(searchedText, TEXTS_FOLDER);
-    } else if (filename.length > 0) {
-        results = backend.findTextInDocument(searchedText, TEXTS_FOLDER, `${filename}.json`);
-    } else {
-        results = [];
-    }
-
-    const documents = JSON.parse(fs.readFileSync(DOCUMENTS_BD_FILE, 'utf8'));
-    results = results.map(result => {
-        const document = documents.find(doc => doc.id === result.document);
-        return {
-            ...result,
-            documentTitle: document ? document.title : 'Unknown'
-        };
+ipcMain.handle('search-document', (event, request) => {
+    return new Promise((resolve, reject) => {
+        searchWorkerCb = resolve;
+        request.TEXTS_FOLDER = TEXTS_FOLDER;
+        request.DOCUMENTS_BD_FILE = DOCUMENTS_BD_FILE;
+        searchWorker.postMessage(request);
     });
+// ipcMain.handle('search-document', async (event, request) => {
+//     let searchedText = request.searchedText;
+//     let filename = request.filename;
+//     let results = [];
 
-    return {
-        success: true,
-        results
-    };
+//     if (!fs.existsSync(TEXTS_FOLDER)) {
+//         fs.mkdirSync(TEXTS_FOLDER);
+//     }
+    
+//     if (filename === undefined) {
+//         results = backend.findTextInAllDocuments(searchedText, TEXTS_FOLDER);
+//     } else if (filename.length > 0) {
+//         results = backend.findTextInDocument(searchedText, TEXTS_FOLDER, `${filename}.json`);
+//     } else {
+//         results = [];
+//     }
+
+//     const documents = JSON.parse(fs.readFileSync(DOCUMENTS_BD_FILE, 'utf8'));
+//     results = results.map(result => {
+//         const document = documents.find(doc => doc.id === result.document);
+//         return {
+//             ...result,
+//             documentTitle: document ? document.title : 'Unknown'
+//         };
+//     });
+
+//     return {
+//         success: true,
+//         results
+//     };
 });
 
 ipcMain.handle('upload-document', async (event, request) => {

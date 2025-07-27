@@ -1,5 +1,6 @@
 {
   "name": "biblio-investiga-desktop",
+  "productName": "Biblio Investiga",
   "version": "1.0.1",
   "main": "main.js",
   "scripts": {

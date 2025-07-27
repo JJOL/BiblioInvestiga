@@ -17,6 +17,7 @@ console.log('STORAGE_DIR:', STORAGE_DIR);
 const selectTextMenu = Menu.buildFromTemplate([{ role: 'copy'}]);
 function createWindow() {
     const mainWindow = new BrowserWindow({
+        title: 'Biblio Investiga',
         width: 1200,
         height: 900,
         webPreferences: {

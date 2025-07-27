@@ -1,4 +1,6 @@
 const { app, BrowserWindow, ipcMain, Menu } = require('electron');
+if (require('electron-squirrel-startup')) app.quit();
+
 const path = require('path');
 const fs = require('fs');
 
@@ -34,7 +36,6 @@ function createWindow() {
     // mainWindow.webContents.openDevTools();
 }
 
-const menu = new Menu();
 
 const TEXTS_FOLDER = path.join(STORAGE_DIR, 'texts');
 if (!fs.existsSync(TEXTS_FOLDER)) {

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
@@ -14,6 +14,7 @@ if (!fs.existsSync(STORAGE_DIR)) {
 }
 console.log('STORAGE_DIR:', STORAGE_DIR);
 
+const selectTextMenu = Menu.buildFromTemplate([{ role: 'copy'}]);
 function createWindow() {
     const mainWindow = new BrowserWindow({
         width: 1200,
@@ -26,8 +27,13 @@ function createWindow() {
     });
 
     mainWindow.loadFile('dist/reader-app/browser/index.html');
+    mainWindow.webContents.on('context-menu', () => {
+        selectTextMenu.popup(mainWindow.webContents);
+    });
     // mainWindow.webContents.openDevTools();
 }
+
+const menu = new Menu();
 
 const TEXTS_FOLDER = path.join(STORAGE_DIR, 'texts');
 if (!fs.existsSync(TEXTS_FOLDER)) {
